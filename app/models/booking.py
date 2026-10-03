@@ -34,7 +34,7 @@ class AirtableBookingRecord(BaseModel):
     agency: Optional[str] = Field(None, alias="Agency")
     booking_nr: Optional[str] = Field(None, alias="Booking Nr.")
     date_trip: Optional[str] = Field(None, alias="Date Trip")
-    trip_name: Optional[str] = Field(None, alias="Trip Name")
+    trip_name: Optional[str] = Field(None, alias="trip Name")
     option: Optional[str] = Field(None, alias="Option")
     customer_name: Optional[str] = Field(None, alias="Customer Name")
     customer_email: Optional[str] = Field(None, alias="Customer Email")
