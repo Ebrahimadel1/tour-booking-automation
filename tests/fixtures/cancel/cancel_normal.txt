@@ -1,0 +1,22 @@
+A booking has been canceled
+Booking Nr.: GYGCANCEL1
+Date
+October 25, 2026, 4:00 PM
+Trip Name
+Test Trip
+Option
+Test Option
+Customer Name
+Cancel User
+Customer Email
+cancel@example.com
+Customer Phone
++111111111
+Guide
+English
+Price
+€ 50.00
+Participants
+1 Adult
+Hotel Name
+Some Hotel

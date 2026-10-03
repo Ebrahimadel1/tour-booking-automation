@@ -1,0 +1,23 @@
+Confirmed
+Booking Nr.: GYGPRICEART
+Date
+October 24, 2026
+Trip Name
+Test Trip
+Option
+Test Option
+Customer Name
+Jane Doe
+Customer Email
+jane@example.com
+Customer Phone
++987654321
+Guide
+French
+Price
+[image: coin]
+€ 93.75
+Participants
+2 Adults
+Hotel Name
+Marriott

@@ -1,0 +1,23 @@
+New booking
+Booking Nr.: GYGDATEARTIF
+Date
+>>
+October 23, 2026 at 4:00 PM
+Trip Name
+Some Trip
+Option
+Some Option
+Customer Name
+John Doe
+Customer Email
+john@example.com
+Customer Phone
++123456789
+Guide
+English
+Price
+USD 120.00
+Participants
+1 Adult
+Hotel Name
+Hilton

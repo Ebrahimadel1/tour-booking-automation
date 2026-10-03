@@ -1,0 +1,23 @@
+Booking detail change
+Booking Nr.: GYGUPDATE1
+Date
+[image]
+October 23, 2026, 6:00 PM
+Trip Name
+Test Trip
+Option
+Test Option
+Customer Name
+Update User
+Customer Email
+update@example.com
+Customer Phone
++111111111
+Guide
+English
+Price
+€ 50.00
+Participants
+1 Adult
+Hotel Name
+Some Hotel
