@@ -11,7 +11,8 @@ class GmailReader:
     def get_unprocessed_bookings(self) -> Iterator[GmailMessage]:
         messages = self.client.search_messages(self.gmail_query)
         
-        for msg in messages:
+        # Process oldest messages first so CREATE happens before UPDATE/CANCEL
+        for msg in reversed(messages):
             if GmailLabels.BOOKING_PROCESSED not in msg.labels and GmailLabels.BOOKING_IGNORED not in msg.labels:
                 yield msg
 
