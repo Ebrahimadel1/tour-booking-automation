@@ -2,7 +2,7 @@ name: Tour Booking Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Run every 15 minutes
+    - cron: '*/5 * * * *'  # Run every 5 minutes
   workflow_dispatch:
     inputs:
       dry_run:
@@ -20,10 +20,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -36,7 +36,14 @@ jobs:
         env:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
         run: |
-          echo "$GMAIL_TOKEN_JSON" > token.json
+          python -c '
+          import os
+          import json
+          token_content = os.environ.get("GMAIL_TOKEN_JSON")
+          if token_content:
+              with open("token.json", "w", encoding="utf-8") as f:
+                  f.write(token_content)
+          '
 
       - name: Run Automation
         env:
