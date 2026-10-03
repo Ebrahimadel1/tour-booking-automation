@@ -106,8 +106,22 @@ class GetYourGuideParser:
             ph_match = re.search(r'Phone:\s*([+\d\s]+)', get_val("Main customer"), re.IGNORECASE)
             if ph_match: customer_phone = ph_match.group(1).strip()
             
-        guide = get_val("Guide") or get_val("Language") or get_val("Tour language")
-        
+        # Prioritize 'Tour language' to avoid 'Guide' falsely matching 'getyourguide.com'
+        guide_raw = get_val("Tour language") or get_val("Guide") or get_val("Language")
+        guide = None
+        if guide_raw:
+            for line in guide_raw.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                # Skip tracking URLs, email addresses, and metadata artifacts
+                if "http" in line or "ls/click" in line or ".com" in line or "@" in line or "Phone:" in line:
+                    continue
+                # Found the actual language line
+                guide = re.sub(r'\(.*?\)', '', line).strip()
+                if not guide:
+                    guide = None
+                break
         price_str = get_val("Total price") or get_val("Price")
         total_price, currency = parse_price(price_str) if price_str else (None, None)
         

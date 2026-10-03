@@ -78,3 +78,10 @@ def test_booking_number():
     text = load_fixture("create", "create_normal.txt")
     booking = GetYourGuideParser.parse(text)
     assert booking.booking_number == "GYGN6BWBM54M"
+
+def test_tour_language_tracking_url_ignored():
+    text = load_fixture("create", "create_with_tour_language.txt")
+    booking = GetYourGuideParser.parse(text)
+    assert booking.booking_number == "GYG83W783H7V"
+    assert booking.guide == "English"
+    assert booking.total_price == 80.00

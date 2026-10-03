@@ -1,0 +1,20 @@
+Booking confirmed
+Reference number: GYG83W783H7V
+Date
+October 23, 2026, 4:00 PM
+Your offer has been booked:
+Cairo: Opal Nile Romantic Dinner Cruise
+Option
+Standard
+Main customer
+John Doe
+customer-xxxx@reply.getyourguide.com
+Phone: +447534857553
+Tour language
+English (Live guide)
+.com/ls/click?upn=u001...
+http://tracking.example.com/click
+Total price
+€ 80.00
+Number of participants
+2 x Adults
