@@ -97,8 +97,15 @@ class GetYourGuideParser:
             trip_name = trip_name.split('\n')[0].strip()
         option = get_val("Option")
         if not option and get_val("Your offer has been booked:"):
-            opt_match = re.search(r'(Option\s*\d+\s*-.*?)(?:\n|$)', get_val("Your offer has been booked:"), re.IGNORECASE)
-            if opt_match: option = opt_match.group(1).strip()
+            raw_booked = get_val("Your offer has been booked:")
+            opt_match = re.search(r'(Option\s*\d+\s*-.*?)(?:\n|$)', raw_booked, re.IGNORECASE)
+            if opt_match: 
+                option = opt_match.group(1).strip()
+            else:
+                lines = [line.strip() for line in raw_booked.split('\n') if line.strip() and not line.startswith('[image:')]
+                if len(lines) >= 2:
+                    option = lines[1]
+                    
         customer_name = get_val("Customer Name") or get_val("Name") or get_val("Main customer")
         if customer_name:
             if customer_name.lower().startswith("name:"):
@@ -126,7 +133,7 @@ class GetYourGuideParser:
                 if "http" in line or "ls/click" in line or ".com" in line or "@" in line or "Phone:" in line:
                     continue
                 # Found the actual language line
-                guide = re.sub(r'\(.*?\)', '', line).strip()
+                guide = re.sub(r'\(.*?\)', '', line).replace('*', '').strip()
                 if not guide:
                     guide = None
                 break
@@ -136,15 +143,16 @@ class GetYourGuideParser:
         participants_str = get_val("Participants") or get_val("Number of participants")
         adt, chd = None, None
         if participants_str:
-            adt_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Adult|Adults)', participants_str, re.IGNORECASE)
-            chd_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Child|Children)', participants_str, re.IGNORECASE)
+            participants_clean = participants_str.replace('*', '')
+            adt_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Adult|Adults)', participants_clean, re.IGNORECASE)
+            chd_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Child|Children)', participants_clean, re.IGNORECASE)
             if adt_match:
                 adt = int(adt_match.group(1))
             if chd_match:
                 chd = int(chd_match.group(1))
             # Fallback for just a number e.g. "2"
             if adt is None and chd is None:
-                just_num = re.search(r'^(\d+)$', participants_str.strip())
+                just_num = re.search(r'^(\d+)$', participants_clean.strip())
                 if just_num:
                     adt = int(just_num.group(1))
                 

@@ -144,8 +144,11 @@ def test_e2e_exception_isolation(repo, gmail_client, gmail_reader):
     results = orchestrator.process_all()
     
     assert len(results) == 2
-    assert results[0].status == ProcessingStatus.FAILED
-    assert results[1].status == ProcessingStatus.SUCCESS
+    # Because GmailReader processes oldest first (reversed), m_good is processed before m_bad
+    assert results[0].status == ProcessingStatus.SUCCESS
+    assert results[0].message_id == "m_good"
+    assert results[1].status == ProcessingStatus.FAILED
+    assert results[1].message_id == "m_bad"
     
     # Ensure second message processed properly despite first failing
     assert repo.find_by_booking_number("GYGN6BWBM54M") is not None
