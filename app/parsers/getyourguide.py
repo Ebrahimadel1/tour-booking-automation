@@ -9,15 +9,15 @@ class GetYourGuideParser:
     @staticmethod
     def detect_operation(text: str) -> OperationType:
         text_lower = text.lower()
-        if "has been canceled" in text_lower or "cancelled" in text_lower or "cancellation" in text_lower:
+        if "was cancelled" in text_lower or "has been canceled" in text_lower or "cancellation" in text_lower:
             return OperationType.CANCEL
-        if "detail change" in text_lower or "update" in text_lower or "modified" in text_lower:
+        if "booking detail change" in text_lower or "booking has changed" in text_lower or "update" in text_lower or "modified" in text_lower:
             return OperationType.UPDATE
-        if "booking confirmed" in text_lower or "new booking" in text_lower:
+        if "your offer has been booked" in text_lower or "booking confirmed" in text_lower or "new booking" in text_lower:
             return OperationType.CREATE
         
         # Strict fallback
-        if "booking nr" in text_lower:
+        if "booking nr" in text_lower or "reference number" in text_lower:
             return OperationType.CREATE
             
         return OperationType.CREATE # default if unknown but parser invoked
@@ -58,8 +58,8 @@ class GetYourGuideParser:
         operation = cls.detect_operation(text)
         
         all_labels = [
-            "Booking Nr.", "Reference number", "Date", "Trip Name", "Your offer has been booked:", "Option", 
-            "Customer Name", "Main customer", "Customer Email", "Customer Phone", 
+            "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "Option", 
+            "Customer Name", "Name", "Main customer", "Customer Email", "Customer Phone", 
             "Guide", "Language", "Tour language", "Price", "Total price", 
             "Participants", "Number of participants", "Hotel Name"
         ]
@@ -68,33 +68,41 @@ class GetYourGuideParser:
             next_labels = [l for l in all_labels if l != label]
             return cls.extract_field(text, label, next_labels)
             
-        booking_nr = get_val("Booking Nr.") or get_val("Reference number")
+        booking_nr = get_val("Booking Nr.") or get_val("Reference number") or get_val("Booking reference")
         if booking_nr:
             match = re.search(r'([A-Z0-9]{8,15})', booking_nr.replace('*', ''))
             if match:
                 booking_nr = match.group(1).strip()
         if not booking_nr:
-            # Strict inline check
-            match = re.search(r'(?:Booking Nr\.|Reference number)\s*:\s*([A-Z0-9]+)', text, re.IGNORECASE)
+            # Strict inline check including CANCEL format (Reference Number: GYG...)
+            match = re.search(r'(?:Booking Nr\.|Reference number|Booking reference)\s*:\s*([A-Z0-9]+)', text, re.IGNORECASE)
             if match:
                 booking_nr = match.group(1).strip()
             else:
                 raise ValueError("Could not find Booking Nr.")
                 
-        date_str = get_val("Date")
+        date_str = get_val("Date New") or get_val("Date")
         if date_str:
-            date_str = date_str.replace('*', '').strip()
+            # If multiple dates (e.g. New Date then Old Date), take the first line
+            date_str = date_str.split('\n')[0].replace('*', '').strip()
+            # Also handle inline 'Date: October 15...'
+            if date_str.lower().startswith("date:"):
+                date_str = date_str[5:].strip()
         date_obj = parse_date(date_str) if date_str else None
         
-        trip_name = get_val("Trip Name") or get_val("Your offer has been booked:")
+        trip_name = get_val("Trip Name") or get_val("Tour") or get_val("Your offer has been booked:")
         if trip_name:
+            if trip_name.lower().startswith("tour:"):
+                trip_name = trip_name[5:].strip()
             trip_name = trip_name.split('\n')[0].strip()
         option = get_val("Option")
         if not option and get_val("Your offer has been booked:"):
             opt_match = re.search(r'(Option\s*\d+\s*-.*?)(?:\n|$)', get_val("Your offer has been booked:"), re.IGNORECASE)
             if opt_match: option = opt_match.group(1).strip()
-        customer_name = get_val("Customer Name") or get_val("Main customer")
+        customer_name = get_val("Customer Name") or get_val("Name") or get_val("Main customer")
         if customer_name:
+            if customer_name.lower().startswith("name:"):
+                customer_name = customer_name[5:].strip()
             customer_name = customer_name.split('\n')[0].strip() # Take only first line in case email/phone are on next lines
         customer_email = get_val("Customer Email")
         if not customer_email and get_val("Main customer"):
@@ -134,6 +142,11 @@ class GetYourGuideParser:
                 adt = int(adt_match.group(1))
             if chd_match:
                 chd = int(chd_match.group(1))
+            # Fallback for just a number e.g. "2"
+            if adt is None and chd is None:
+                just_num = re.search(r'^(\d+)$', participants_str.strip())
+                if just_num:
+                    adt = int(just_num.group(1))
                 
         hotel_name = get_val("Hotel Name")
         

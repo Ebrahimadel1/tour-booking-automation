@@ -85,3 +85,21 @@ def test_tour_language_tracking_url_ignored():
     assert booking.booking_number == "GYG83W783H7V"
     assert booking.guide == "English"
     assert booking.total_price == 80.00
+
+def test_update_real():
+    text = load_fixture("update", "update_real.txt")
+    booking = GetYourGuideParser.parse(text)
+    assert booking.operation == OperationType.UPDATE
+    assert booking.booking_number == "GYG83W783H7V"
+    assert booking.date_trip == datetime(2026, 10, 15, 20, 0)
+    assert booking.adt == 2
+    assert booking.guide == "English"
+
+def test_cancel_real():
+    text = load_fixture("cancel", "cancel_real.txt")
+    booking = GetYourGuideParser.parse(text)
+    assert booking.operation == OperationType.CANCEL
+    assert booking.booking_number == "GYG83W783H7V"
+    assert booking.trip_name == "Cairo: Opal Nile Romantic Dinner Cruise & Live Entertainment"
+    assert booking.customer_name == "Shangar Sentharajah"
+    assert booking.date_trip == datetime(2026, 10, 15, 20, 0)
