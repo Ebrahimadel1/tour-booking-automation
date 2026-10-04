@@ -51,7 +51,14 @@ jobs:
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
           AIRTABLE_TABLE_NAME: ${{ secrets.AIRTABLE_TABLE_NAME }}
           GMAIL_QUERY: "in:inbox -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
-          # Use input for manual runs, default to 'true' for scheduled runs for safety for now
-          DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
         run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            export DRY_RUN="false"
+            TRIGGER="schedule"
+          else
+            export DRY_RUN="${{ github.event.inputs.dry_run }}"
+            TRIGGER="workflow_dispatch"
+          fi
+          echo "Trigger: $TRIGGER"
+          echo "DRY RUN: $DRY_RUN"
           python run.py
