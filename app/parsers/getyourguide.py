@@ -26,10 +26,12 @@ class GetYourGuideParser:
     def extract_field(text: str, current_label: str, next_labels: List[str]) -> Optional[str]:
         """
         Extracts text after `current_label` up to the first occurrence of any label in `next_labels` at the start of a line.
+        Handles forwarded email quote marks (>, >>).
         """
         # Find position of current_label
-        # Match label optionally preceded by newline
-        start_match = re.search(r'(?:^|\n)\s*' + re.escape(current_label) + r'[\s:]*', text, re.IGNORECASE)
+        # Match label optionally preceded by newline and quote marks
+        quote_prefix = r'(?:>[>\s]*)?'
+        start_match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(current_label) + r'[\s:]*', text, re.IGNORECASE)
         if not start_match:
             # fallback to anywhere in text for certain fields like Booking Nr if not at start of line
             start_match = re.search(re.escape(current_label) + r'[\s:]*', text, re.IGNORECASE)
@@ -41,8 +43,8 @@ class GetYourGuideParser:
         # Find the earliest next label after start_idx
         end_idx = len(text)
         for label in next_labels:
-            # Match label at the beginning of a line
-            match = re.search(r'(?:^|\n)\s*' + re.escape(label) + r'[\s:]*', text[start_idx:], re.IGNORECASE)
+            # Match label at the beginning of a line (with optional quote marks)
+            match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(label) + r'[\s:]*', text[start_idx:], re.IGNORECASE)
             if match:
                 found_pos = start_idx + match.start()
                 if found_pos < end_idx:
@@ -50,11 +52,16 @@ class GetYourGuideParser:
                     
         extracted = text[start_idx:end_idx].strip()
         # Clean up leading/trailing artifacts
-        extracted = re.sub(r'^>>\s*|^\s*\[image.*?\]\s*', '', extracted, flags=re.MULTILINE).strip()
+        extracted = re.sub(r'^(?:>[>\s]*)+\s*|^\s*\[image.*?\]\s*', '', extracted, flags=re.MULTILINE).strip()
         return extracted if extracted else None
 
     @classmethod
     def parse(cls, text: str) -> NormalizedBooking:
+        # Strip forwarded email headers to avoid matching 'Date:' from the header
+        text = re.sub(r'---------- Forwarded message ---------.*?To:\s*[^\n]+\n', '', text, flags=re.IGNORECASE | re.DOTALL)
+        # Strip image tags that cause extraction artifacts
+        text = re.sub(r'\[image:.*?\]', '', text, flags=re.IGNORECASE)
+        
         operation = cls.detect_operation(text)
         
         all_labels = [
