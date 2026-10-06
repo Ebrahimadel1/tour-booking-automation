@@ -68,7 +68,7 @@ class GetYourGuideParser:
             "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "Option", 
             "Customer Name", "Name", "Main customer", "Customer Email", "Customer Phone", 
             "Guide", "Language", "Tour language", "Price", "Total price", 
-            "Participants", "Number of participants", "Hotel Name"
+            "Participants", "Number of participants", "Hotel Name", "Pickup location"
         ]
         
         def get_val(label: str) -> Optional[str]:
@@ -163,7 +163,20 @@ class GetYourGuideParser:
                 if just_num:
                     adt = int(just_num.group(1))
                 
-        hotel_name = get_val("Hotel Name")
+        hotel_name = get_val("Hotel Name") or get_val("Pickup location")
+        # In GYG update emails, it might be labeled as "Pickup location"
+        if hotel_name:
+            if hotel_name.startswith("New\n"):
+                hotel_name = hotel_name[4:].strip()
+            elif hotel_name.startswith("New "):
+                hotel_name = hotel_name[4:].strip()
+            
+            # Clean up common appended texts from plain text emails
+            hotel_name = hotel_name.replace("Open in Google Maps", "").strip()
+            if "Customer hasn't specified a pickup location" in hotel_name:
+                hotel_name = hotel_name.split("Customer hasn't specified a pickup location")[0].strip()
+            if "Customer hasn't" in hotel_name and "specified a pickup" in hotel_name:
+                hotel_name = hotel_name.split("Customer hasn't")[0].strip()
         
         return NormalizedBooking(
             provider="GetYourGuide",
