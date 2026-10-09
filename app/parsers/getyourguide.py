@@ -60,15 +60,19 @@ class GetYourGuideParser:
 
     @classmethod
     def parse(cls, text: str) -> NormalizedBooking:
+        import html
+        text = html.unescape(text)
+        
         # Strip forwarded email headers to avoid matching 'Date:' from the header
-        text = re.sub(r'---------- Forwarded message ---------.*?To:\s*[^\n]+\n', '', text, flags=re.IGNORECASE | re.DOTALL)
+        # Match typical forwarding patterns including "Sent from my HONOR phone" or "Original message"
+        text = re.sub(r'(?:Sent from my .*?\n+)?(?:---------- Forwarded message ---------|-------- Original message --------).*?Subject:\s*[^\n]+\n', '', text, flags=re.IGNORECASE | re.DOTALL)
         # Strip image tags that cause extraction artifacts
         text = re.sub(r'\[image:.*?\]', '', text, flags=re.IGNORECASE)
         
         operation = cls.detect_operation(text)
         
         all_labels = [
-            "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "Option", 
+            "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "You've received a last-minute booking:", "Option", 
             "Customer Name", "Name", "Main customer", "Customer Email", "Customer Phone", 
             "Guide", "Language", "Tour language", "Price", "Total price", 
             "Participants", "Number of participants", "Hotel Name", "Pickup location"
@@ -100,7 +104,7 @@ class GetYourGuideParser:
                 date_str = date_str[5:].strip()
         date_obj = parse_date(date_str) if date_str else None
         
-        trip_name = get_val("Trip Name") or get_val("Tour") or get_val("Your offer has been booked:")
+        trip_name = get_val("Trip Name") or get_val("Tour") or get_val("Your offer has been booked:") or get_val("You've received a last-minute booking:")
         if trip_name:
             if trip_name.lower().startswith("tour:"):
                 trip_name = trip_name[5:].strip()
@@ -119,12 +123,20 @@ class GetYourGuideParser:
         if not trip_name or not option:
             first_label_match = re.search(r'(?:^|\n)\s*(?:Booking Nr\.|Reference number|Date New|Date|Main customer|Customer Name|Tour language|Number of participants|Participants)[\s:]', text, re.IGNORECASE)
             top_text = text[:first_label_match.start()].strip() if first_label_match else text
-            top_text = re.sub(r'^(?:Booking confirmed|New booking|Booking detail change|Cancellation).*?\n', '', top_text, flags=re.IGNORECASE).strip()
             lines = [line.strip() for line in top_text.split('\n') if line.strip() and not line.startswith('[image:')]
-            if len(lines) >= 1 and not trip_name:
-                trip_name = lines[0]
-            if len(lines) >= 2 and not option:
-                option = lines[1]
+            
+            # Filter out greeting/conversational lines
+            ignore_phrases = ["booking confirmed", "new booking", "booking detail change", "cancellation", "hi supply partner", "great news!", "hi nile crystal", "we would like to inform you", "booking has changed", "we're writing to let you know", "booking has been canceled", "was cancelled"]
+            valid_lines = []
+            for line in lines:
+                lower = line.lower()
+                if any(p in lower for p in ignore_phrases): continue
+                valid_lines.append(line)
+                
+            if len(valid_lines) >= 1 and not trip_name:
+                trip_name = valid_lines[0]
+            if len(valid_lines) >= 2 and not option:
+                option = valid_lines[1]
 
                     
         customer_name = get_val("Customer Name") or get_val("Name") or get_val("Main customer")
