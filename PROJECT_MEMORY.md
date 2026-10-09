@@ -67,6 +67,12 @@ Root Cause: Using Pydantic V1 `class Config` style in Pydantic V2.
 Fix: Updated `AirtableBookingRecord` to use `model_config = ConfigDict(populate_by_name=True)`.
 Regression Test: N/A (Syntax fix)
 Status: RESOLVED
+
+Problem: Parser failing to extract specific fields or extracting incorrect data (Phone, Option, Hotel Name).
+Root Cause: HTML entities `&#43;` for plus signs, missing newlines for block tags in html-to-text conversion causing line-merges, and unpredictable label strings like "You've received a last-minute booking:".
+Fix: Added HTML entity unescaping, improved `_html_to_text` to correctly insert newlines for `<div>`, `<tr>`, etc. Added new phrases to the label dictionaries and restricted inline fallback matching.
+Regression Test: Re-ran parsing script against failing production payloads.
+Status: RESOLVED
 ```
 
 ## Decisions Made
@@ -75,7 +81,7 @@ Status: RESOLVED
 - Used Pydantic for models to guarantee strict type enforcement and straightforward field aliasing.
 - The Parser extracts fields using regular expressions to safely find the boundaries between explicit field labels instead of relying on a hardcoded layout or `take next N lines` logic.
 - Validator purely returns a `ValidationResult` (is_valid, errors, warnings) without mutating `NormalizedBooking` or interacting with external services.
-- **Protected Fields**: `Trip Name`, `Booking Nr.`, `Customer Name` are completely shielded from automatic UPDATE logic.
+- **Protected Fields**: `Trip Name`, `Booking Nr.`, `Customer Name`, `Option` are completely shielded from automatic UPDATE logic to prevent unintended destructive overwrites.
 - **Gmail State Machine**: Process -> if success -> Add label. If failure -> Leave unlabeled to retry.
 - **Orchestration**: Dependency Injection is used to pass Repositories and Gmail clients into the Orchestrator, making testing 100% mocked and fast.
 
