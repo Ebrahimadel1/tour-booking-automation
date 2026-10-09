@@ -31,10 +31,12 @@ class GetYourGuideParser:
         # Find position of current_label
         # Match label optionally preceded by newline and quote marks
         quote_prefix = r'(?:>[>\s]*)?'
-        start_match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(current_label) + r'[\s:]*', text, re.IGNORECASE)
+        # Ensure we don't match a label as a substring of a larger word (e.g. "Option" inside "Optional")
+        wb = r'\b' if re.search(r'\w$', current_label) else ''
+        start_match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
         if not start_match:
             # fallback to anywhere in text for certain fields like Booking Nr if not at start of line
-            start_match = re.search(re.escape(current_label) + r'[\s:]*', text, re.IGNORECASE)
+            start_match = re.search(re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
             if not start_match:
                 return None
         
@@ -43,8 +45,9 @@ class GetYourGuideParser:
         # Find the earliest next label after start_idx
         end_idx = len(text)
         for label in next_labels:
+            wb_next = r'\b' if re.search(r'\w$', label) else ''
             # Match label at the beginning of a line (with optional quote marks)
-            match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(label) + r'[\s:]*', text[start_idx:], re.IGNORECASE)
+            match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(label) + wb_next + r'[\s:]*', text[start_idx:], re.IGNORECASE)
             if match:
                 found_pos = start_idx + match.start()
                 if found_pos < end_idx:
@@ -112,6 +115,17 @@ class GetYourGuideParser:
                 lines = [line.strip() for line in raw_booked.split('\n') if line.strip() and not line.startswith('[image:')]
                 if len(lines) >= 2:
                     option = lines[1]
+                    
+        if not trip_name or not option:
+            first_label_match = re.search(r'(?:^|\n)\s*(?:Booking Nr\.|Reference number|Date New|Date|Main customer|Customer Name|Tour language|Number of participants|Participants)[\s:]', text, re.IGNORECASE)
+            top_text = text[:first_label_match.start()].strip() if first_label_match else text
+            top_text = re.sub(r'^(?:Booking confirmed|New booking|Booking detail change|Cancellation).*?\n', '', top_text, flags=re.IGNORECASE).strip()
+            lines = [line.strip() for line in top_text.split('\n') if line.strip() and not line.startswith('[image:')]
+            if len(lines) >= 1 and not trip_name:
+                trip_name = lines[0]
+            if len(lines) >= 2 and not option:
+                option = lines[1]
+
                     
         customer_name = get_val("Customer Name") or get_val("Name") or get_val("Main customer")
         if customer_name:
