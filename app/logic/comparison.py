@@ -11,7 +11,8 @@ class ComparisonLogic:
     PROTECTED_FIELDS = {
         "Booking Nr.", 
         "Trip Name", 
-        "Customer Name"
+        "Customer Name",
+        "Option"
     }
     
     @staticmethod
