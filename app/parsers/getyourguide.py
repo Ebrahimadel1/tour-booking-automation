@@ -23,7 +23,7 @@ class GetYourGuideParser:
         return OperationType.CREATE # default if unknown but parser invoked
 
     @staticmethod
-    def extract_field(text: str, current_label: str, next_labels: List[str]) -> Optional[str]:
+    def extract_field(text: str, current_label: str, next_labels: List[str], allow_inline: bool = False) -> Optional[str]:
         """
         Extracts text after `current_label` up to the first occurrence of any label in `next_labels` at the start of a line.
         Handles forwarded email quote marks (>, >>).
@@ -31,12 +31,14 @@ class GetYourGuideParser:
         # Find position of current_label
         # Match label optionally preceded by newline and quote marks
         quote_prefix = r'(?:>[>\s]*)?'
-        # Ensure we don't match a label as a substring of a larger word (e.g. "Option" inside "Optional")
         wb = r'\b' if re.search(r'\w$', current_label) else ''
-        start_match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
+        wb_start = r'\b' if re.search(r'^\w', current_label) else ''
+        start_match = re.search(r'(?:^|\n)\s*' + quote_prefix + wb_start + re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
         if not start_match:
+            if not allow_inline:
+                return None
             # fallback to anywhere in text for certain fields like Booking Nr if not at start of line
-            start_match = re.search(re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
+            start_match = re.search(wb_start + re.escape(current_label) + wb + r'[\s:]*', text, re.IGNORECASE)
             if not start_match:
                 return None
         
@@ -46,8 +48,9 @@ class GetYourGuideParser:
         end_idx = len(text)
         for label in next_labels:
             wb_next = r'\b' if re.search(r'\w$', label) else ''
+            wb_start_next = r'\b' if re.search(r'^\w', label) else ''
             # Match label at the beginning of a line (with optional quote marks)
-            match = re.search(r'(?:^|\n)\s*' + quote_prefix + re.escape(label) + wb_next + r'[\s:]*', text[start_idx:], re.IGNORECASE)
+            match = re.search(r'(?:^|\n)\s*' + quote_prefix + wb_start_next + re.escape(label) + wb_next + r'[\s:]*', text[start_idx:], re.IGNORECASE)
             if match:
                 found_pos = start_idx + match.start()
                 if found_pos < end_idx:
@@ -75,12 +78,12 @@ class GetYourGuideParser:
             "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "You've received a last-minute booking:", "Option", 
             "Customer Name", "Name", "Main customer", "Customer Email", "Customer Phone", 
             "Guide", "Language", "Tour language", "Price", "Total price", 
-            "Participants", "Number of participants", "Hotel Name", "Pickup location"
+            "Participants", "Number of participants", "Hotel Name", "Pickup location", "Pickup"
         ]
         
-        def get_val(label: str) -> Optional[str]:
+        def get_val(label: str, allow_inline: bool = False) -> Optional[str]:
             next_labels = [l for l in all_labels if l != label]
-            return cls.extract_field(text, label, next_labels)
+            return cls.extract_field(text, label, next_labels, allow_inline=allow_inline)
             
         booking_nr = get_val("Booking Nr.") or get_val("Reference number") or get_val("Booking reference")
         if booking_nr:
@@ -104,14 +107,14 @@ class GetYourGuideParser:
                 date_str = date_str[5:].strip()
         date_obj = parse_date(date_str) if date_str else None
         
-        trip_name = get_val("Trip Name") or get_val("Tour") or get_val("Your offer has been booked:") or get_val("You've received a last-minute booking:")
+        trip_name = get_val("Trip Name") or get_val("Tour") or get_val("Your offer has been booked:", True) or get_val("You've received a last-minute booking:", True)
         if trip_name:
             if trip_name.lower().startswith("tour:"):
                 trip_name = trip_name[5:].strip()
             trip_name = trip_name.split('\n')[0].strip()
         option = get_val("Option")
-        if not option and get_val("Your offer has been booked:"):
-            raw_booked = get_val("Your offer has been booked:")
+        raw_booked = get_val("Your offer has been booked:", True) or get_val("You've received a last-minute booking:", True)
+        if not option and raw_booked:
             opt_match = re.search(r'(Option\s*\d+\s*-.*?)(?:\n|$)', raw_booked, re.IGNORECASE)
             if opt_match: 
                 option = opt_match.group(1).strip()
@@ -137,7 +140,7 @@ class GetYourGuideParser:
                 trip_name = valid_lines[0]
             if len(valid_lines) >= 2 and not option:
                 option = valid_lines[1]
-
+ 
                     
         customer_name = get_val("Customer Name") or get_val("Name") or get_val("Main customer")
         if customer_name:
@@ -165,6 +168,12 @@ class GetYourGuideParser:
                 # Skip tracking URLs, email addresses, and metadata artifacts
                 if "http" in line or "ls/click" in line or ".com" in line or "@" in line or "Phone:" in line:
                     continue
+                
+                # Split off inline labels if HTML-to-text missed a newline
+                for adj_lbl in ["Price", "Pickup", "Total price"]:
+                    if f" {adj_lbl}" in line:
+                        line = line.split(f" {adj_lbl}")[0].strip()
+                        
                 # Found the actual language line
                 guide = re.sub(r'\(.*?\)', '', line).replace('*', '').strip()
                 if not guide:
@@ -189,7 +198,7 @@ class GetYourGuideParser:
                 if just_num:
                     adt = int(just_num.group(1))
                 
-        hotel_name = get_val("Hotel Name") or get_val("Pickup location")
+        hotel_name = get_val("Hotel Name") or get_val("Pickup location") or get_val("Pickup")
         # In GYG update emails, it might be labeled as "Pickup location"
         if hotel_name:
             if hotel_name.startswith("New\n"):
@@ -203,6 +212,7 @@ class GetYourGuideParser:
                 hotel_name = hotel_name.split("Customer hasn't specified a pickup location")[0].strip()
             if "Customer hasn't" in hotel_name and "specified a pickup" in hotel_name:
                 hotel_name = hotel_name.split("Customer hasn't")[0].strip()
+
         
         return NormalizedBooking(
             provider="GetYourGuide",
