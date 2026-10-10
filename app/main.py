@@ -60,8 +60,9 @@ class Orchestrator:
             
             if "getyourguide" in sender_lower or "getyourguide" in subject_lower or "gyg" in subject_lower:
                 if "booking" in subject_lower or "canceled" in subject_lower or "detail change" in subject_lower:
-                    is_booking = True
-                    provider = "GetYourGuide"
+                    if "messaged you" not in subject_lower:
+                        is_booking = True
+                        provider = "GetYourGuide"
             
             if not is_booking:
                 logger.info(f"Message {msg.message_id} is NOT a booking. Marking as ignored and skipping.")

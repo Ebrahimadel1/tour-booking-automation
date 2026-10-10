@@ -112,6 +112,8 @@ class GetYourGuideParser:
             if trip_name.lower().startswith("tour:"):
                 trip_name = trip_name[5:].strip()
             trip_name = trip_name.split('\n')[0].strip()
+            # Strip brackets that appear in plain text version of GetYourGuide emails
+            trip_name = re.sub(r'^\[(.*?)\]$', r'\1', trip_name).strip()
         option = get_val("Option")
         raw_booked = get_val("Your offer has been booked:", True) or get_val("You've received a last-minute booking:", True)
         if not option and raw_booked:
