@@ -46,7 +46,7 @@ class GeminiService:
         )
 
         try:
-            model = genai.GenerativeModel('gemini-2.5-flash', generation_config={
+            model = genai.GenerativeModel('gemini-3.8-flash', generation_config={
                 "response_mime_type": "application/json",
                 "temperature": 0.1
             })
