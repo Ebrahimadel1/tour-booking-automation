@@ -20,8 +20,8 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-CREDENTIALS_FILE = PROJECT_ROOT / "credentials_new.json"
-TOKEN_FILE = PROJECT_ROOT / "token_new.json"
+CREDENTIALS_FILE = PROJECT_ROOT / "credentials.json"
+TOKEN_FILE = PROJECT_ROOT / "token.json"
 
 
 def get_gmail_credentials() -> Credentials:
