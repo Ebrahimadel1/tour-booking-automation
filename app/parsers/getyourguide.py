@@ -95,8 +95,6 @@ class GetYourGuideParser:
             match = re.search(r'(?:Booking Nr\.|Reference number|Booking reference)\s*:\s*([A-Z0-9]+)', text, re.IGNORECASE)
             if match:
                 booking_nr = match.group(1).strip()
-            else:
-                raise ValueError("Could not find Booking Nr.")
                 
         date_str = get_val("Date New") or get_val("Date")
         if date_str:
@@ -215,10 +213,13 @@ class GetYourGuideParser:
             if "Customer hasn't" in hotel_name and "specified a pickup" in hotel_name:
                 hotel_name = hotel_name.split("Customer hasn't")[0].strip()
 
-        
-        return NormalizedBooking(
+        is_customer_message = "messaged you" in text.lower() or "customer sent you a message" in text.lower()
+        if is_customer_message:
+            operation = OperationType.UPDATE
+            
+        booking = NormalizedBooking(
             provider="GetYourGuide",
-            booking_number=booking_nr,
+            booking_number=booking_nr or "",
             operation=operation,
             date_trip=date_obj,
             trip_name=trip_name,
@@ -233,3 +234,14 @@ class GetYourGuideParser:
             chd=chd,
             hotel_name=hotel_name
         )
+        
+        needs_ai = is_customer_message or not booking.booking_number or (booking.operation == OperationType.CREATE and (not booking.customer_name or booking.total_price is None))
+        
+        if needs_ai:
+            from app.ai.gemini_service import GeminiService
+            booking = GeminiService.enhance_booking(booking, text, is_customer_message)
+            
+        if not booking.booking_number:
+            raise ValueError("Could not find Booking Nr. even after standard parsing and AI extraction.")
+            
+        return booking
