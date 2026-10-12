@@ -25,8 +25,8 @@ def main():
         gmail_client = GoogleGmailClient()
         logger.info("Gmail connected successfully.")
         
-        # Read generic query from environment or default to unlabelled inbox messages within last 24 hours
-        gmail_query = os.getenv("GMAIL_QUERY") or "in:inbox newer_than:1d -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
+        # Read generic query from environment or default to GYG Booking label within last 24 hours
+        gmail_query = os.getenv("GMAIL_QUERY") or "label:GYG-Booking newer_than:1d -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
         logger.info(f"Using GMAIL_QUERY: {gmail_query}")
         gmail_reader = GmailReader(client=gmail_client, gmail_query=gmail_query)
         

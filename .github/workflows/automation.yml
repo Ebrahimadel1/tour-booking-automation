@@ -51,7 +51,7 @@ jobs:
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
           AIRTABLE_TABLE_NAME: ${{ secrets.AIRTABLE_TABLE_NAME }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GMAIL_QUERY: "in:inbox newer_than:1d -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
+          GMAIL_QUERY: "label:GYG-Booking newer_than:1d -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             export DRY_RUN="false"
