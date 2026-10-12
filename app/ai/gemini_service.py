@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class ExtractedBookingData(BaseModel):
     booking_number: Optional[str] = Field(None, description="The booking reference number (e.g. GYG...).")
     hotel_name: Optional[str] = Field(None, description="The hotel name or pickup location mentioned in the message.")
+    google_maps: Optional[str] = Field(None, description="The Google Maps or location URL if mentioned in the message.")
     customer_name: Optional[str] = Field(None, description="The customer's name, if explicitly stated.")
     customer_email: Optional[str] = Field(None, description="The customer's email address, if stated.")
     customer_phone: Optional[str] = Field(None, description="The customer's phone number, if stated.")
@@ -41,6 +42,7 @@ class GeminiService:
             f"The email is a {'customer message/update' if is_customer_message else 'booking notification'}.\n"
             "Extract any relevant information that might be an update or missing from standard parsing.\n"
             "If the customer is asking to change their pickup location or hotel, extract it as hotel_name.\n"
+            "If a Google Maps or location link is present, extract it as google_maps.\n"
             "Return ONLY a JSON object that matches the schema provided.\n\n"
             f"--- EMAIL TEXT ---\n{raw_text}\n--- END EMAIL TEXT ---"
         )
@@ -58,7 +60,14 @@ class GeminiService:
             if data.get("booking_number") and not booking.booking_number:
                 booking.booking_number = data["booking_number"]
             if data.get("hotel_name"):
-                booking.hotel_name = data["hotel_name"]
+                from app.parsers.getyourguide import GetYourGuideParser
+                h_name, h_maps = GetYourGuideParser._extract_hotel_and_maps(data["hotel_name"])
+                if h_name:
+                    booking.hotel_name = h_name
+                if h_maps and not booking.google_maps:
+                    booking.google_maps = h_maps
+            if data.get("google_maps"):
+                booking.google_maps = data["google_maps"]
             if data.get("customer_name") and not booking.customer_name:
                 booking.customer_name = data["customer_name"]
             if data.get("customer_email") and not booking.customer_email:

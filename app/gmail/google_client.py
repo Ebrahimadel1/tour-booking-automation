@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import re
+import time
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any
@@ -21,7 +22,11 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 CREDENTIALS_FILE = PROJECT_ROOT / "credentials_new.json"
-TOKEN_FILE = PROJECT_ROOT / "token_new.json"
+TOKEN_FILE = (
+    PROJECT_ROOT / "token_new2.json"
+    if (PROJECT_ROOT / "token_new2.json").exists()
+    else PROJECT_ROOT / "token_new.json"
+)
 
 
 def get_gmail_credentials() -> Credentials:
@@ -97,18 +102,32 @@ class GoogleGmailClient(GmailClient):
             for item in response.get("messages", []):
                 message_id = item["id"]
 
-                raw_message = (
-                    self.service.users()
-                    .messages()
-                    .get(
-                        userId="me",
-                        id=message_id,
-                        format="full",
-                    )
-                    .execute()
-                )
+                raw_message = None
+                for attempt in range(4):
+                    try:
+                        raw_message = (
+                            self.service.users()
+                            .messages()
+                            .get(
+                                userId="me",
+                                id=message_id,
+                                format="full",
+                            )
+                            .execute()
+                        )
+                        break
+                    except Exception as err:
+                        if "rateLimitExceeded" in str(err) or "403" in str(err) or "429" in str(err):
+                            wait_time = 2 * (attempt + 1)
+                            time.sleep(wait_time)
+                        else:
+                            raise
 
-                messages.append(self._convert_message(raw_message))
+                if raw_message:
+                    messages.append(self._convert_message(raw_message))
+
+                # Polite delay to prevent rate limit spikes
+                time.sleep(0.1)
 
             page_token = response.get("nextPageToken")
 
@@ -291,7 +310,7 @@ if __name__ == "__main__":
     print(f"Processed label ID: {label_id}")
 
     messages = client.search_messages(
-        'from:(getyourguide.com) -label:BOOKING_PROCESSED'
+        'from:(getyourguide.com) newer_than:1d -label:BOOKING_PROCESSED'
     )
 
     print(f"Found {len(messages)} unprocessed messages.")

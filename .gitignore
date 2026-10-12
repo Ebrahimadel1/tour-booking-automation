@@ -3,8 +3,8 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
-credentials.json
-token.json
+credentials*.json
+token*.json
 # Local email fixtures / private email exports
 *.eml
 
@@ -15,4 +15,5 @@ token.json
 desktop.ini
 
 *_new.json
+*_new*.json
 debug_*.txt

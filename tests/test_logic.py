@@ -143,3 +143,22 @@ def test_cancel_idempotent(repo):
     booking.operation = OperationType.CANCEL
     cancel_logic.execute(booking)
     assert cancel_logic.execute(booking)
+
+def test_update_hotel_and_google_maps(repo):
+    create_logic = CreateLogic(repo)
+    update_logic = UpdateLogic(repo)
+    
+    booking = create_sample_normalized()
+    booking.hotel_name = "Old Hotel"
+    booking.google_maps = "https://maps.google.com/old"
+    create_logic.execute(booking)
+    
+    # Update with new hotel and new map link
+    booking.operation = OperationType.UPDATE
+    booking.hotel_name = "Nile Boutique Hotel"
+    booking.google_maps = "https://mail.getyourguide.com/ls/click?upn=new"
+    assert update_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.hotel_name == "Nile Boutique Hotel"
+    assert saved.google_maps == "https://mail.getyourguide.com/ls/click?upn=new"

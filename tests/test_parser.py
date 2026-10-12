@@ -103,3 +103,54 @@ def test_cancel_real():
     assert booking.trip_name == "Cairo: Opal Nile Romantic Dinner Cruise & Live Entertainment"
     assert booking.customer_name == "Shangar Sentharajah"
     assert booking.date_trip == datetime(2026, 10, 15, 20, 0)
+
+def test_hotel_and_google_maps_separation():
+    raw_email = """
+Booking confirmed
+Booking Nr.: GYG999TEST
+Date
+October 23, 2026, 4:00 PM
+Trip Name
+Hurghada: City Tour
+Option
+Standard Option
+Customer Name
+John Doe
+Customer Email
+john@example.com
+Customer Phone
++20123456789
+Price
+€ 100.00
+Hotel Name
+— Nile Boutique Hotel, Nile Street, Al Agouzah, Agouza, Egypt <https://mail.getyourguide.com/ls/click?upn=u001.maps.google.com%2Ftest>
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.hotel_name == "Nile Boutique Hotel, Nile Street, Al Agouzah, Agouza, Egypt"
+    assert booking.google_maps == "https://mail.getyourguide.com/ls/click?upn=u001.maps.google.com%2Ftest"
+
+def test_pickup_location_with_open_in_google_maps():
+    raw_email = """
+Booking detail change: - S707722 - GYGN6BWBM54M
+Booking reference
+*GYGN6BWBM54M*
+Date
+October 23, 2026 at 4:00 PM
+Pickup location New
+Pickalbatros Jungle Aqua Park Resort - Neverland Hurghada, Al Ismaileya,
+Hurghada 1, Ägypten
+(coordinates: 27.0886061, 33.8257797)
+Open in Google Maps
+<https://mail.getyourguide.com/ls/click?upn=u001.cgvWDPhZtte8w9SmEnPFbJpEukibyIP5>
+Customer hasn't specified a pickup location. We will remind them to specify a location.
+Number of participants
+3
+Language
+German
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert "Open in Google Maps" not in (booking.hotel_name or "")
+    assert "https://" not in (booking.hotel_name or "")
+    assert "Pickalbatros Jungle Aqua Park Resort" in booking.hotel_name
+    assert booking.google_maps == "https://mail.getyourguide.com/ls/click?upn=u001.cgvWDPhZtte8w9SmEnPFbJpEukibyIP5"
+

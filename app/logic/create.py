@@ -25,6 +25,7 @@ class CreateLogic:
             adt=booking.adt,
             chd=booking.chd,
             hotel_name=booking.hotel_name,
+            google_maps=booking.google_maps,
             booking_status="Active"
         )
         success = self.repo.create(record)

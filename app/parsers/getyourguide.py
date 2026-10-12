@@ -61,6 +61,49 @@ class GetYourGuideParser:
         extracted = re.sub(r'^(?:>[>\s]*)+\s*|^\s*\[image.*?\]\s*', '', extracted, flags=re.MULTILINE).strip()
         return extracted if extracted else None
 
+    @staticmethod
+    def _extract_hotel_and_maps(raw: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+        if not raw:
+            return None, None
+
+        text = raw.strip()
+
+        # Clean GYG update prefixes
+        if text.startswith("New\n"):
+            text = text[4:].strip()
+        elif text.startswith("New "):
+            text = text[4:].strip()
+
+        # Cut off disclaimer text
+        if "Customer hasn't specified a pickup location" in text:
+            text = text.split("Customer hasn't specified a pickup location")[0].strip()
+        if "Customer hasn't" in text and "specified a pickup" in text:
+            text = text.split("Customer hasn't")[0].strip()
+
+        # Extract Google Maps / URL
+        google_maps = None
+        url_match = re.search(r'<?(https?://[^\s>]+)>?', text)
+        if url_match:
+            google_maps = url_match.group(1).rstrip('>')
+            # Remove the URL from the hotel text
+            text = text[:url_match.start()] + " " + text[url_match.end():]
+
+        # Remove "Open in Google Maps" text
+        text = re.sub(r'Open in Google Maps', '', text, flags=re.IGNORECASE)
+
+        # Clean newlines into spaces and strip bullet points/artifacts
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        cleaned_text = " ".join(lines).strip()
+
+        # Strip leading bullet/dash/hyphen/em-dash (e.g. "— Nile Boutique Hotel...")
+        cleaned_text = re.sub(r'^[—\-\*\s]+', '', cleaned_text).strip()
+
+        # Clean multiple spaces
+        cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+
+        hotel_name = cleaned_text if cleaned_text else None
+        return hotel_name, google_maps
+
     @classmethod
     def parse(cls, text: str) -> NormalizedBooking:
         import html
@@ -198,20 +241,15 @@ class GetYourGuideParser:
                 if just_num:
                     adt = int(just_num.group(1))
                 
-        hotel_name = get_val("Hotel Name") or get_val("Pickup location") or get_val("Pickup")
-        # In GYG update emails, it might be labeled as "Pickup location"
-        if hotel_name:
-            if hotel_name.startswith("New\n"):
-                hotel_name = hotel_name[4:].strip()
-            elif hotel_name.startswith("New "):
-                hotel_name = hotel_name[4:].strip()
-            
-            # Clean up common appended texts from plain text emails
-            hotel_name = hotel_name.replace("Open in Google Maps", "").strip()
-            if "Customer hasn't specified a pickup location" in hotel_name:
-                hotel_name = hotel_name.split("Customer hasn't specified a pickup location")[0].strip()
-            if "Customer hasn't" in hotel_name and "specified a pickup" in hotel_name:
-                hotel_name = hotel_name.split("Customer hasn't")[0].strip()
+        hotel_raw = get_val("Hotel Name") or get_val("Pickup location") or get_val("Pickup")
+        hotel_name, google_maps = cls._extract_hotel_and_maps(hotel_raw)
+        
+        if not google_maps:
+            maps_raw = get_val("Google Maps") or get_val("Open in Google Maps")
+            if maps_raw:
+                url_m = re.search(r'<?(https?://[^\s>]+)>?', maps_raw)
+                if url_m:
+                    google_maps = url_m.group(1).rstrip('>')
 
         is_customer_message = "messaged you" in text.lower() or "customer sent you a message" in text.lower()
         if is_customer_message:
@@ -232,7 +270,8 @@ class GetYourGuideParser:
             currency=currency,
             adt=adt,
             chd=chd,
-            hotel_name=hotel_name
+            hotel_name=hotel_name,
+            google_maps=google_maps,
         )
         
         needs_ai = is_customer_message or not booking.booking_number or (booking.operation == OperationType.CREATE and (not booking.customer_name or booking.total_price is None))

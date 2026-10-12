@@ -23,6 +23,7 @@ class NormalizedBooking(BaseModel):
     adt: Optional[int] = None
     chd: Optional[int] = None
     hotel_name: Optional[str] = None
+    google_maps: Optional[str] = None
 
 class AirtableBookingRecord(BaseModel):
     """
@@ -44,4 +45,5 @@ class AirtableBookingRecord(BaseModel):
     adt: Optional[int] = Field(None, alias="ADT")
     chd: Optional[int] = Field(None, alias="CHD")
     hotel_name: Optional[str] = Field(None, alias="Hotel Name")
+    google_maps: Optional[str] = Field(None, alias="Google Maps")
     booking_status: Optional[str] = Field(None, alias="Booking Status")

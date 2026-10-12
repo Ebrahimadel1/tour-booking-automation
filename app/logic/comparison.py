@@ -45,6 +45,7 @@ class ComparisonLogic:
         check_optional_field(incoming.adt, current.adt, "ADT")
         check_optional_field(incoming.chd, current.chd, "CHD")
         check_optional_field(incoming.hotel_name, current.hotel_name, "Hotel Name")
+        check_optional_field(incoming.google_maps, current.google_maps, "Google Maps")
         check_optional_field(incoming.customer_email, current.customer_email, "Customer Email")
         check_optional_field(incoming.customer_phone, current.customer_phone, "Customer Phone")
         
