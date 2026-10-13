@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from app.models.operations import OperationType
 
 class NormalizedBooking(BaseModel):
@@ -52,3 +52,10 @@ class AirtableBookingRecord(BaseModel):
     hotel_name: Optional[str] = Field(None, alias="Hotel Name")
     google_maps: Optional[str] = Field(None, alias="Google Maps")
     booking_status: Optional[str] = Field(None, alias="Booking Status")
+
+    @field_validator("booking_status", mode="before")
+    @classmethod
+    def parse_booking_status(cls, v):
+        if isinstance(v, dict):
+            return v.get("value")
+        return v

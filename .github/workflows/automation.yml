@@ -50,6 +50,11 @@ jobs:
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
           AIRTABLE_TABLE_NAME: ${{ secrets.AIRTABLE_TABLE_NAME }}
+          ENABLE_AIRTABLE: ${{ secrets.ENABLE_AIRTABLE || 'true' }}
+          ENABLE_BASEROW: ${{ secrets.ENABLE_BASEROW || 'true' }}
+          BASEROW_URL: ${{ secrets.BASEROW_URL || 'https://booking.tourcare.ai' }}
+          BASEROW_TOKEN: ${{ secrets.BASEROW_TOKEN }}
+          BASEROW_TABLE_ID: ${{ secrets.BASEROW_TABLE_ID || '1194' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GMAIL_QUERY: "label:GYG-Booking newer_than:1d -label:BOOKING_PROCESSED -label:BOOKING_IGNORED"
         run: |

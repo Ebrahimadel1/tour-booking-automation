@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from app.gmail.google_client import GoogleGmailClient
 from app.gmail.reader import GmailReader
 from app.repositories.airtable_repository import AirtableRepository
+from app.repositories.baserow_repository import BaserowRepository
+from app.repositories.dual_repository import DualBookingRepository
 from app.main import Orchestrator
 
 def main():
@@ -30,14 +32,25 @@ def main():
         logger.info(f"Using GMAIL_QUERY: {gmail_query}")
         gmail_reader = GmailReader(client=gmail_client, gmail_query=gmail_query)
         
-        logger.info("Initializing Airtable Repository...")
-        airtable_repo = AirtableRepository()
+        enable_airtable = os.getenv("ENABLE_AIRTABLE", "true").lower() == "true"
+        enable_baserow = os.getenv("ENABLE_BASEROW", "true").lower() == "true"
+        logger.info(f"Repository Configuration -> Airtable: {enable_airtable}, Baserow: {enable_baserow}")
+        
+        airtable_repo = AirtableRepository() if enable_airtable else None
+        baserow_repo = BaserowRepository() if enable_baserow else None
+        
+        dual_repo = DualBookingRepository(
+            airtable_repo=airtable_repo,
+            baserow_repo=baserow_repo,
+            enable_airtable=enable_airtable,
+            enable_baserow=enable_baserow
+        )
         
         dry_run_env = os.getenv("DRY_RUN", "true").lower() == "true"
         logger.info(f"Initializing Orchestrator (DRY RUN = {dry_run_env})...")
         orchestrator = Orchestrator(
             gmail_reader=gmail_reader,
-            repository=airtable_repo,
+            repository=dual_repo,
             dry_run=dry_run_env  
         )
         
