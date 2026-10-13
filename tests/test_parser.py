@@ -189,6 +189,7 @@ Price
     assert booking.guide == "English"
     assert booking.adt == 2
     assert booking.inf == 1
+    assert booking.country == "South Africa"
     assert booking.total_price == 80.0
 
 

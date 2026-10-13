@@ -20,6 +20,8 @@ class CreateLogic:
             customer_name=booking.customer_name,
             customer_email=booking.customer_email,
             customer_phone=booking.customer_phone,
+            country_from_phone=booking.country,
+            customer_country=booking.country,
             guide=booking.guide,
             total_price_eur=booking.total_price,
             adt=booking.adt,

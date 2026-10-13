@@ -3,6 +3,7 @@ from typing import Optional, List
 from app.models.booking import NormalizedBooking
 from app.models.operations import OperationType
 from app.parsers.date_parser import parse_date, parse_price
+from app.parsers.phone_parser import get_country_from_phone
 
 class GetYourGuideParser:
     
@@ -206,6 +207,8 @@ class GetYourGuideParser:
             ph_match = re.search(r'Phone:\s*([+\d\s]+)', raw_cust, re.IGNORECASE)
             if ph_match: customer_phone = ph_match.group(1).strip()
             
+        customer_country = get_country_from_phone(customer_phone)
+            
         # Prioritize 'Tour language' to avoid 'Guide' falsely matching 'getyourguide.com'
         guide_raw = get_val("Tour language") or get_val("Guide") or get_val("Language")
         guide = None
@@ -282,6 +285,7 @@ class GetYourGuideParser:
             inf=inf,
             hotel_name=hotel_name,
             google_maps=google_maps,
+            country=customer_country,
         )
         
         needs_ai = is_customer_message or not booking.booking_number or (booking.operation == OperationType.CREATE and (not booking.customer_name or booking.total_price is None))

@@ -49,5 +49,7 @@ class ComparisonLogic:
         check_optional_field(incoming.google_maps, current.google_maps, "Google Maps")
         check_optional_field(incoming.customer_email, current.customer_email, "Customer Email")
         check_optional_field(incoming.customer_phone, current.customer_phone, "Customer Phone")
+        check_optional_field(incoming.country, current.country_from_phone, "Country from Phone")
+        check_optional_field(incoming.country, current.customer_country, "Customer Country")
         
         return changed_fields

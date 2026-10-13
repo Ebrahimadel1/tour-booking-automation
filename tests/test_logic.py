@@ -181,3 +181,24 @@ def test_create_and_update_with_infant(repo):
     saved = repo.find_by_booking_number("GYG123")
     assert saved.inf == 2
 
+def test_create_and_update_with_country(repo):
+    create_logic = CreateLogic(repo)
+    update_logic = UpdateLogic(repo)
+    
+    booking = create_sample_normalized()
+    booking.country = "South Africa"
+    create_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.country_from_phone == "South Africa"
+    assert saved.customer_country == "South Africa"
+    
+    booking.operation = OperationType.UPDATE
+    booking.country = "France"
+    assert update_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.country_from_phone == "France"
+    assert saved.customer_country == "France"
+
+

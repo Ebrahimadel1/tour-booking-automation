@@ -79,6 +79,12 @@ Root Cause: In HTML emails, <br data-v-...> had attributes so regex <br\s*/?> fa
 Fix: Updated _html_to_text to handle <br[^>]*> and block tags with attributes, added inline regex boundary splitting for customer_name, and added inf (Infant) parsing and Inf Airtable alias mapping.
 Regression Test: Tested with real GYG996RG4VG7 email payload.
 Status: RESOLVED
+
+Problem: "Country from Phone" in Airtable was showing error "Something went wrong: Couldn't generate..." because Airtable native AI was failing/over quota and the Python automation was not populating the country.
+Root Cause: Automation previously did not resolve country from the customer's phone number or send it to Airtable.
+Fix: Integrated `phonenumbers` geocoder in `app/parsers/phone_parser.py`, added `country` to `NormalizedBooking`, and mapped to Airtable fields `Country from Phone` and `Customer Country`.
+Regression Test: Tested with multiple international phone numbers and live GYG996RG4VG7 payload.
+Status: RESOLVED
 ```
 
 ## Decisions Made
@@ -96,11 +102,11 @@ Status: RESOLVED
 Models tests (`test_models.py`)  → PASS (3 passed)
 Parser tests (`test_parser.py`)  → PASS (14 passed)
 Validator tests (`test_validators.py`) → PASS (22 passed)
-Logic tests (`test_logic.py`) → PASS (12 passed)
+Logic tests (`test_logic.py`) → PASS (13 passed)
 Airtable tests (`test_airtable.py`) → PASS (4 passed)
 Gmail tests (`test_gmail.py`) → PASS (5 passed)
 Main Orchestrator tests (`test_main.py`) → PASS (9 passed)
-TOTAL: 72 tests passing.
+TOTAL: 73 tests passing.
 ```
 
 ## Deployment Status

@@ -28,7 +28,9 @@ def test_airtable_booking_record_aliases():
         booking_status="Active",
         hotel_name="Some Hotel",
         google_maps="https://maps.google.com/test",
-        inf=1
+        inf=1,
+        country_from_phone="South Africa",
+        customer_country="South Africa"
     )
     
     # Test that model dumps using aliases correctly
@@ -42,6 +44,8 @@ def test_airtable_booking_record_aliases():
     assert dumped["Hotel Name"] == "Some Hotel"
     assert dumped["Google Maps"] == "https://maps.google.com/test"
     assert dumped["Inf"] == 1
+    assert dumped["Country from Phone"] == "South Africa"
+    assert dumped["Customer Country"] == "South Africa"
 
 def test_airtable_booking_record_population_by_alias():
     # Test we can instantiate using alias names (simulating reading from Airtable)
@@ -52,7 +56,9 @@ def test_airtable_booking_record_population_by_alias():
         "Booking Status": "Canceled",
         "Hotel Name": "Nile Boutique Hotel",
         "Google Maps": "https://mail.getyourguide.com/ls/click",
-        "Inf": 2
+        "Inf": 2,
+        "Country from Phone": "France",
+        "Customer Country": "France"
     }
     
     record = AirtableBookingRecord(**data)
@@ -63,3 +69,5 @@ def test_airtable_booking_record_population_by_alias():
     assert record.hotel_name == "Nile Boutique Hotel"
     assert record.google_maps == "https://mail.getyourguide.com/ls/click"
     assert record.inf == 2
+    assert record.country_from_phone == "France"
+    assert record.customer_country == "France"
