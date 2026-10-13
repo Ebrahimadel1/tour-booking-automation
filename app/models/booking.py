@@ -53,9 +53,32 @@ class AirtableBookingRecord(BaseModel):
     google_maps: Optional[str] = Field(None, alias="Google Maps")
     booking_status: Optional[str] = Field(None, alias="Booking Status")
 
-    @field_validator("booking_status", mode="before")
+    @field_validator(
+        "booking_status",
+        "country_from_phone",
+        "customer_country",
+        "agency",
+        "trip_name",
+        "option",
+        "hotel_name",
+        "guide",
+        mode="before"
+    )
     @classmethod
-    def parse_booking_status(cls, v):
+    def parse_string_fields(cls, v):
         if isinstance(v, dict):
-            return v.get("value")
+            # Handles Airtable AI generated fields {"state": "generated", "value": "..."},
+            # Airtable/Baserow selects {"id": ..., "value": "..."} or {"name": "..."},
+            # or error objects where value is absent (returns None).
+            val = v.get("value") if "value" in v else v.get("name")
+            return str(val) if val is not None else None
+        elif isinstance(v, list):
+            # Handles Airtable lookup/rollup lists e.g. ["France"] or [{"name": "..."}]
+            if not v:
+                return None
+            first = v[0]
+            if isinstance(first, dict):
+                val = first.get("value") if "value" in first else first.get("name")
+                return str(val) if val is not None else None
+            return str(first) if first is not None else None
         return v

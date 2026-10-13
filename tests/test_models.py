@@ -71,3 +71,38 @@ def test_airtable_booking_record_population_by_alias():
     assert record.inf == 2
     assert record.country_from_phone == "France"
     assert record.customer_country == "France"
+
+
+def test_airtable_booking_record_ai_and_lookup_dict_fields():
+    # Test handling Airtable AI generated field dictionaries
+    data = {
+        "Agency": "GetYourGuide",
+        "Booking Nr.": "GYGMX37XQY9L",
+        "Country from Phone": {
+            "state": "generated",
+            "value": "France",
+            "isStale": False
+        },
+        "Customer Country": ["France"],
+        "Booking Status": {"id": 1, "value": "Canceled"}
+    }
+    record = AirtableBookingRecord(**data)
+    assert record.country_from_phone == "France"
+    assert record.customer_country == "France"
+    assert record.booking_status == "Canceled"
+
+
+def test_airtable_booking_record_ai_error_field():
+    # Test handling Airtable AI error or empty field dictionaries
+    data = {
+        "Booking Nr.": "GYGMX37XQY9L",
+        "Country from Phone": {
+            "state": "error",
+            "error": "#ERROR! Not found",
+            "isStale": False
+        },
+        "Customer Country": []
+    }
+    record = AirtableBookingRecord(**data)
+    assert record.country_from_phone is None
+    assert record.customer_country is None

@@ -85,6 +85,12 @@ Root Cause: Automation previously did not resolve country from the customer's ph
 Fix: Integrated `phonenumbers` geocoder in `app/parsers/phone_parser.py`, added `country` to `NormalizedBooking`, and mapped to Airtable fields `Country from Phone` and `Customer Country`.
 Regression Test: Tested with multiple international phone numbers and live GYG996RG4VG7 payload.
 Status: RESOLVED
+
+Problem: Pydantic validation error when reading bookings from Airtable: "Country from Phone Input should be a valid string, input_value={'state': 'generated', ...}".
+Root Cause: Airtable native AI or Lookup fields return complex dictionary/list objects rather than raw strings.
+Fix: Added a Pydantic field_validator (`parse_string_fields`) on `AirtableBookingRecord` with `mode="before"` to safely extract the string value from dicts (`v.get("value")` or `v.get("name")`) and lists, gracefully falling back to None if empty or in an error state.
+Regression Test: Added unit tests `test_airtable_booking_record_ai_and_lookup_dict_fields` and `test_airtable_booking_record_ai_error_field` in `tests/test_models.py`.
+Status: RESOLVED
 ```
 
 ## Decisions Made
