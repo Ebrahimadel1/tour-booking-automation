@@ -69,9 +69,15 @@ Regression Test: N/A (Syntax fix)
 Status: RESOLVED
 
 Problem: Parser failing to extract specific fields or extracting incorrect data (Phone, Option, Hotel Name).
-Root Cause: HTML entities `&#43;` for plus signs, missing newlines for block tags in html-to-text conversion causing line-merges, and unpredictable label strings like "You've received a last-minute booking:".
-Fix: Added HTML entity unescaping, improved `_html_to_text` to correctly insert newlines for `<div>`, `<tr>`, etc. Added new phrases to the label dictionaries and restricted inline fallback matching.
+Root Cause: HTML entities &#43; for plus signs, missing newlines for block tags in html-to-text conversion causing line-merges, and unpredictable label strings like "You've received a last-minute booking:".
+Fix: Added HTML entity unescaping, improved _html_to_text to correctly insert newlines for <div>, <tr>, etc. Added new phrases to the label dictionaries and restricted inline fallback matching.
 Regression Test: Re-ran parsing script against failing production payloads.
+Status: RESOLVED
+
+Problem: Customer name in Airtable contained email, phone, and language; Infant participant count was not populated in Airtable # Inf.
+Root Cause: In HTML emails, <br data-v-...> had attributes so regex <br\s*/?> failed to match and turned breaks into spaces, causing name/email/phone to collapse onto one line. Additionally, infant regex and Inf Airtable mapping were missing.
+Fix: Updated _html_to_text to handle <br[^>]*> and block tags with attributes, added inline regex boundary splitting for customer_name, and added inf (Infant) parsing and Inf Airtable alias mapping.
+Regression Test: Tested with real GYG996RG4VG7 email payload.
 Status: RESOLVED
 ```
 
@@ -88,13 +94,13 @@ Status: RESOLVED
 ## Tests
 ```text
 Models tests (`test_models.py`)  → PASS (3 passed)
-Parser tests (`test_parser.py`)  → PASS (8 passed)
+Parser tests (`test_parser.py`)  → PASS (14 passed)
 Validator tests (`test_validators.py`) → PASS (22 passed)
-Logic tests (`test_logic.py`) → PASS (10 passed)
+Logic tests (`test_logic.py`) → PASS (12 passed)
 Airtable tests (`test_airtable.py`) → PASS (4 passed)
 Gmail tests (`test_gmail.py`) → PASS (5 passed)
 Main Orchestrator tests (`test_main.py`) → PASS (9 passed)
-TOTAL: 61 tests passing.
+TOTAL: 72 tests passing.
 ```
 
 ## Deployment Status
