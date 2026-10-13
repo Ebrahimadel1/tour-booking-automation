@@ -78,9 +78,12 @@ class BookingValidator:
             
         if not is_valid_participant_count(booking.chd):
             result.add_error("chd: cannot be negative")
+
+        if not is_valid_participant_count(booking.inf):
+            result.add_error("inf: cannot be negative")
             
-        if booking.adt is None and booking.chd is None:
-            result.add_warning("participants: no adults or children specified")
+        if booking.adt is None and booking.chd is None and booking.inf is None:
+            result.add_warning("participants: no adults, children, or infants specified")
 
         if not is_not_empty_string(booking.hotel_name):
             result.add_warning("hotel_name: missing optional field")
@@ -103,6 +106,9 @@ class BookingValidator:
             
         if booking.chd is not None and not is_valid_participant_count(booking.chd):
             result.add_error("chd: cannot be negative")
+
+        if booking.inf is not None and not is_valid_participant_count(booking.inf):
+            result.add_error("inf: cannot be negative")
             
         # Optional warnings for missing data in updates? Not strictly necessary since updates can be sparse.
         

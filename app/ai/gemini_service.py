@@ -18,6 +18,7 @@ class ExtractedBookingData(BaseModel):
     customer_phone: Optional[str] = Field(None, description="The customer's phone number, if stated.")
     adt: Optional[int] = Field(None, description="The number of adult participants.")
     chd: Optional[int] = Field(None, description="The number of child participants.")
+    inf: Optional[int] = Field(None, description="The number of infant participants.")
     option: Optional[str] = Field(None, description="The specific tour option requested.")
     guide: Optional[str] = Field(None, description="The requested guide language.")
     message: Optional[str] = Field(None, description="A summary of the customer's message or request.")
@@ -78,6 +79,8 @@ class GeminiService:
                 booking.adt = data["adt"]
             if data.get("chd") and not booking.chd:
                 booking.chd = data["chd"]
+            if data.get("inf") and not booking.inf:
+                booking.inf = data["inf"]
             if data.get("option") and not booking.option:
                 booking.option = data["option"]
             if data.get("guide") and not booking.guide:

@@ -154,3 +154,41 @@ German
     assert "Pickalbatros Jungle Aqua Park Resort" in booking.hotel_name
     assert booking.google_maps == "https://mail.getyourguide.com/ls/click?upn=u001.cgvWDPhZtte8w9SmEnPFbJpEukibyIP5"
 
+def test_main_customer_isolation_and_infant_participants():
+    raw_email = """
+Hi Supply Partner, great news!
+You've received a last-minute booking:
+
+Cairo: Opal Nile Romantic Dinner Cruise & Live Entertainment
+Excluding Transfer (Pickup & Drop-off)
+
+Reference number
+GYG996RG4VG7
+
+Date
+October 13, 2026, 6:00 PM
+
+Number of participants
+1 x Infant (Age 0 - 4)
+2 x Adults (Age 10 - 99)
+
+Main customer
+— Ziyaad Khan customer-37g3geb2kjsxlnlv@reply.getyourguide.com Phone: +27842613320 Language: English
+
+Tour language
+English (Live guide)
+
+Price
+€ 80.00
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.booking_number == "GYG996RG4VG7"
+    assert booking.customer_name == "Ziyaad Khan"
+    assert booking.customer_email == "customer-37g3geb2kjsxlnlv@reply.getyourguide.com"
+    assert booking.customer_phone == "+27842613320"
+    assert booking.guide == "English"
+    assert booking.adt == 2
+    assert booking.inf == 1
+    assert booking.total_price == 80.0
+
+

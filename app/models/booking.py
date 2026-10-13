@@ -22,6 +22,7 @@ class NormalizedBooking(BaseModel):
     currency: Optional[str] = None
     adt: Optional[int] = None
     chd: Optional[int] = None
+    inf: Optional[int] = None
     hotel_name: Optional[str] = None
     google_maps: Optional[str] = None
 
@@ -44,6 +45,7 @@ class AirtableBookingRecord(BaseModel):
     total_price_eur: Optional[float] = Field(None, alias="Total price EUR")
     adt: Optional[int] = Field(None, alias="ADT")
     chd: Optional[int] = Field(None, alias="CHD")
+    inf: Optional[int] = Field(None, alias="Inf")
     hotel_name: Optional[str] = Field(None, alias="Hotel Name")
     google_maps: Optional[str] = Field(None, alias="Google Maps")
     booking_status: Optional[str] = Field(None, alias="Booking Status")

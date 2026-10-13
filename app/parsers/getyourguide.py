@@ -190,14 +190,20 @@ class GetYourGuideParser:
             if customer_name.lower().startswith("name:"):
                 customer_name = customer_name[5:].strip()
             customer_name = customer_name.split('\n')[0].strip() # Take only first line in case email/phone are on next lines
+            # Split off inline email, phone, or language if they appeared on the same line
+            customer_name = re.split(r'\s+[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+|\s+Phone:|\s+Tel:|\s+Language:', customer_name, flags=re.IGNORECASE)[0].strip()
+            # Strip leading bullet/dash/em-dash
+            customer_name = re.sub(r'^[—\-\*\s]+', '', customer_name).strip()
         customer_email = get_val("Customer Email")
-        if not customer_email and get_val("Main customer"):
-            em_match = re.search(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', get_val("Main customer"))
+        if not customer_email:
+            raw_cust = get_val("Main customer") or text
+            em_match = re.search(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', raw_cust)
             if em_match: customer_email = em_match.group(1).strip()
             
         customer_phone = get_val("Customer Phone")
-        if not customer_phone and get_val("Main customer"):
-            ph_match = re.search(r'Phone:\s*([+\d\s]+)', get_val("Main customer"), re.IGNORECASE)
+        if not customer_phone:
+            raw_cust = get_val("Main customer") or text
+            ph_match = re.search(r'Phone:\s*([+\d\s]+)', raw_cust, re.IGNORECASE)
             if ph_match: customer_phone = ph_match.group(1).strip()
             
         # Prioritize 'Tour language' to avoid 'Guide' falsely matching 'getyourguide.com'
@@ -226,17 +232,20 @@ class GetYourGuideParser:
         total_price, currency = parse_price(price_str) if price_str else (None, None)
         
         participants_str = get_val("Participants") or get_val("Number of participants")
-        adt, chd = None, None
+        adt, chd, inf = None, None, None
         if participants_str:
             participants_clean = participants_str.replace('*', '')
             adt_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Adult|Adults)', participants_clean, re.IGNORECASE)
             chd_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Child|Children)', participants_clean, re.IGNORECASE)
+            inf_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Infant|Infants)', participants_clean, re.IGNORECASE)
             if adt_match:
                 adt = int(adt_match.group(1))
             if chd_match:
                 chd = int(chd_match.group(1))
+            if inf_match:
+                inf = int(inf_match.group(1))
             # Fallback for just a number e.g. "2"
-            if adt is None and chd is None:
+            if adt is None and chd is None and inf is None:
                 just_num = re.search(r'^(\d+)$', participants_clean.strip())
                 if just_num:
                     adt = int(just_num.group(1))
@@ -270,6 +279,7 @@ class GetYourGuideParser:
             currency=currency,
             adt=adt,
             chd=chd,
+            inf=inf,
             hotel_name=hotel_name,
             google_maps=google_maps,
         )

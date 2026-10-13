@@ -287,8 +287,8 @@ class GoogleGmailClient(GmailClient):
             flags=re.IGNORECASE | re.DOTALL,
         )
 
-        text = re.sub(r"</?(div|tr|li|p|h[1-6]|td|th)\s*>", "\n", text, flags=re.IGNORECASE)
-        text = re.sub(r"<br\s*/?>", "\n", text, flags=re.IGNORECASE)
+        text = re.sub(r"</?(div|tr|li|p|h[1-6]|td|th|section|article)[^>]*>", "\n", text, flags=re.IGNORECASE)
+        text = re.sub(r"<br[^>]*>", "\n", text, flags=re.IGNORECASE)
         text = re.sub(r"<[^>]+>", " ", text)
 
         text = re.sub(r"[ \t]+", " ", text)

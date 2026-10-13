@@ -24,6 +24,7 @@ class CreateLogic:
             total_price_eur=booking.total_price,
             adt=booking.adt,
             chd=booking.chd,
+            inf=booking.inf,
             hotel_name=booking.hotel_name,
             google_maps=booking.google_maps,
             booking_status="Active"
