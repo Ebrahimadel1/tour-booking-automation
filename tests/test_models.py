@@ -106,3 +106,37 @@ def test_airtable_booking_record_ai_error_field():
     record = AirtableBookingRecord(**data)
     assert record.country_from_phone is None
     assert record.customer_country is None
+
+
+def test_airtable_booking_record_add_ons():
+    record = AirtableBookingRecord(
+        booking_nr="GYGADDON1",
+        add_ons="2 x Round Trip Transportation (Per Person)"
+    )
+    dumped = record.model_dump(by_alias=True, exclude_none=True)
+    assert "Add - Ons" in dumped
+    assert dumped["Add - Ons"] == "2 x Round Trip Transportation (Per Person)"
+
+    # Test reading alias from dict
+    data = {
+        "Booking Nr.": "GYGADDON1",
+        "Add - Ons": "2 x Round Trip Transportation (Per Person)"
+    }
+    rec2 = AirtableBookingRecord(**data)
+    assert rec2.add_ons == "2 x Round Trip Transportation (Per Person)"
+
+    # Test reading from select/dict or list
+    data_dict = {
+        "Booking Nr.": "GYGADDON1",
+        "Add - Ons": {"value": "2 x Round Trip Transportation"}
+    }
+    rec3 = AirtableBookingRecord(**data_dict)
+    assert rec3.add_ons == "2 x Round Trip Transportation"
+
+    data_list = {
+        "Booking Nr.": "GYGADDON1",
+        "Add - Ons": ["2 x Round Trip Transportation"]
+    }
+    rec4 = AirtableBookingRecord(**data_list)
+    assert rec4.add_ons == "2 x Round Trip Transportation"
+

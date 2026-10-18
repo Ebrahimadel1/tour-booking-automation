@@ -40,6 +40,7 @@ class ComparisonLogic:
                 changed_fields[alias] = incoming_val
 
         check_optional_field(incoming.option, current.option, "Option")
+        check_optional_field(incoming.add_ons, current.add_ons, "Add - Ons")
         check_optional_field(incoming.guide, current.guide, "Guide")
         check_optional_field(incoming.total_price, current.total_price_eur, "Total price EUR")
         check_optional_field(incoming.adt, current.adt, "ADT")

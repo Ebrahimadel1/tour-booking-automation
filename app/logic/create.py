@@ -17,6 +17,7 @@ class CreateLogic:
             date_trip=booking.date_trip.isoformat() if booking.date_trip else None,
             trip_name=booking.trip_name,
             option=booking.option,
+            add_ons=booking.add_ons,
             customer_name=booking.customer_name,
             customer_email=booking.customer_email,
             customer_phone=booking.customer_phone,

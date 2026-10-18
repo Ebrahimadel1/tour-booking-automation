@@ -202,3 +202,23 @@ def test_create_and_update_with_country(repo):
     assert saved.customer_country == "France"
 
 
+def test_create_and_update_with_add_ons(repo):
+    create_logic = CreateLogic(repo)
+    update_logic = UpdateLogic(repo)
+    
+    booking = create_sample_normalized()
+    booking.add_ons = "2 x Round Trip Transportation (Per Person)"
+    create_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.add_ons == "2 x Round Trip Transportation (Per Person)"
+    
+    booking.operation = OperationType.UPDATE
+    booking.add_ons = "2 x Private Airport Transfer"
+    assert update_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.add_ons == "2 x Private Airport Transfer"
+
+
+

@@ -90,6 +90,10 @@ Problem: Pydantic validation error when reading bookings from Airtable: "Country
 Root Cause: Airtable native AI or Lookup fields return complex dictionary/list objects rather than raw strings.
 Fix: Added a Pydantic field_validator (`parse_string_fields`) on `AirtableBookingRecord` with `mode="before"` to safely extract the string value from dicts (`v.get("value")` or `v.get("name")`) and lists, gracefully falling back to None if empty or in an error state.
 Regression Test: Added unit tests `test_airtable_booking_record_ai_and_lookup_dict_fields` and `test_airtable_booking_record_ai_error_field` in `tests/test_models.py`.
+Problem: GYG emails with add-ons under "Number of participants" (e.g. "2 x Round Trip Transportation (Per Person)") left Airtable field "Add - Ons" empty.
+Root Cause: Parser was only extracting standard participant numbers (Adults, Children, Infants) from the participants section and ignoring extras/add-on lines, and neither NormalizedBooking nor AirtableBookingRecord had an add_ons field mapped to Airtable alias "Add - Ons".
+Fix: Added `add_ons` to `NormalizedBooking` and `AirtableBookingRecord` (alias="Add - Ons"), updated `GetYourGuideParser` to extract any non-participant line under `Number of participants` (as well as explicit "Add-ons" labels) without altering adult/child/infant parsing, and wired `add_ons` through `CreateLogic`, `ComparisonLogic`, and `GeminiService`.
+Regression Test: Added unit tests `test_participants_with_add_ons_round_trip`, `test_participants_with_child_and_add_ons`, `test_add_ons_explicit_label` in `tests/test_parser.py`, `test_airtable_booking_record_add_ons` in `tests/test_models.py`, and `test_create_and_update_with_add_ons` in `tests/test_logic.py`.
 Status: RESOLVED
 ```
 
@@ -105,14 +109,15 @@ Status: RESOLVED
 
 ## Tests
 ```text
-Models tests (`test_models.py`)  → PASS (3 passed)
-Parser tests (`test_parser.py`)  → PASS (14 passed)
+Models tests (`test_models.py`)  → PASS (6 passed)
+Parser tests (`test_parser.py`)  → PASS (17 passed)
 Validator tests (`test_validators.py`) → PASS (22 passed)
-Logic tests (`test_logic.py`) → PASS (13 passed)
+Logic tests (`test_logic.py`) → PASS (14 passed)
 Airtable tests (`test_airtable.py`) → PASS (4 passed)
+Baserow tests (`test_baserow.py`) → PASS (10 passed)
 Gmail tests (`test_gmail.py`) → PASS (5 passed)
-Main Orchestrator tests (`test_main.py`) → PASS (9 passed)
-TOTAL: 73 tests passing.
+Main Orchestrator tests (`test_main.py`) → PASS (12 passed)
+TOTAL: 90 tests passing.
 ```
 
 ## Deployment Status

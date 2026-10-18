@@ -122,7 +122,7 @@ class GetYourGuideParser:
             "Booking Nr.", "Reference number", "Booking reference", "Date New", "Date", "Trip Name", "Tour", "Your offer has been booked:", "You've received a last-minute booking:", "Option", 
             "Customer Name", "Name", "Main customer", "Customer Email", "Customer Phone", 
             "Guide", "Language", "Tour language", "Price", "Total price", 
-            "Participants", "Number of participants", "Hotel Name", "Pickup location", "Pickup"
+            "Participants", "Number of participants", "Add-ons", "Add-on", "Add ons", "Add on", "Hotel Name", "Pickup location", "Pickup"
         ]
         
         def get_val(label: str, allow_inline: bool = False) -> Optional[str]:
@@ -236,6 +236,7 @@ class GetYourGuideParser:
         
         participants_str = get_val("Participants") or get_val("Number of participants")
         adt, chd, inf = None, None, None
+        add_ons = None
         if participants_str:
             participants_clean = participants_str.replace('*', '')
             adt_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Adult|Adults)', participants_clean, re.IGNORECASE)
@@ -252,6 +253,34 @@ class GetYourGuideParser:
                 just_num = re.search(r'^(\d+)$', participants_clean.strip())
                 if just_num:
                     adt = int(just_num.group(1))
+
+            # Extract add-on lines present under participants (e.g. "2 x Round Trip Transportation (Per Person)")
+            add_on_lines = []
+            for raw_line in participants_clean.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                # Skip standard participant category lines
+                if re.search(r'(?:Adult|Adults|Child|Children|Infant|Infants|Youth)', line, re.IGNORECASE):
+                    continue
+                if re.match(r'^\d+$', line):
+                    continue
+                # Clean leading bullets/dashes/artifacts and extra spaces
+                cleaned_line = re.sub(r'^[—\-\*\s]+', '', line).strip()
+                cleaned_line = re.sub(r'\s+', ' ', cleaned_line).strip()
+                if cleaned_line:
+                    add_on_lines.append(cleaned_line)
+
+            if add_on_lines:
+                add_ons = "\n".join(add_on_lines).strip()
+
+        if not add_ons:
+            add_ons_raw = get_val("Add-ons") or get_val("Add-on") or get_val("Add ons") or get_val("Add on")
+            if add_ons_raw:
+                cleaned_raw = add_ons_raw.replace('*', '').strip()
+                cleaned_raw = re.sub(r'^[—\-\*\s]+', '', cleaned_raw).strip()
+                cleaned_raw = re.sub(r'\s+', ' ', cleaned_raw).strip()
+                add_ons = cleaned_raw if cleaned_raw else None
                 
         hotel_raw = get_val("Hotel Name") or get_val("Pickup location") or get_val("Pickup")
         hotel_name, google_maps = cls._extract_hotel_and_maps(hotel_raw)
@@ -274,6 +303,7 @@ class GetYourGuideParser:
             date_trip=date_obj,
             trip_name=trip_name,
             option=option,
+            add_ons=add_ons,
             customer_name=customer_name,
             customer_email=customer_email,
             customer_phone=customer_phone,

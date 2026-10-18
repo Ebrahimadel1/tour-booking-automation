@@ -193,3 +193,118 @@ Price
     assert booking.total_price == 80.0
 
 
+def test_participants_with_add_ons_round_trip():
+    raw_email = """
+Hi Supply Partner, great news!
+You've received a last-minute booking:
+
+Cairo: Nile Royal Topaz Night Dinner Cruise with Show
+Excluding Transfer (Pickup & Drop-off)
+
+Reference number
+GYG32LWR4KLQ
+
+Date
+October 18, 2026, 8:30 PM
+
+Number of participants
+2 x Adults (Age 10 - 99)
+2 x Round Trip Transportation (Per Person)
+
+Main customer
+Paula Andrea Conde Quinones
+customer-f2wt3bto76mzhse3@reply.getyourguide.com
+Phone: +447714203499
+Language: English
+
+Tour language
+English (Live guide)
+
+Price
+€ 130.00
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.booking_number == "GYG32LWR4KLQ"
+    assert booking.trip_name == "Cairo: Nile Royal Topaz Night Dinner Cruise with Show"
+    assert booking.option == "Excluding Transfer (Pickup & Drop-off)"
+    assert booking.adt == 2
+    assert booking.chd is None
+    assert booking.inf is None
+    assert booking.add_ons == "2 x Round Trip Transportation (Per Person)"
+    assert booking.total_price == 130.0
+
+
+def test_participants_with_child_and_add_ons():
+    raw_email = """
+Booking confirmed
+Reference number
+GYGTESTADDON2
+
+Date
+October 20, 2026, 7:00 PM
+
+Trip Name
+Cairo Dinner Cruise
+
+Option
+Buffet Dinner
+
+Number of participants
+2 x Adults (Age 12 - 99)
+1 x Child (Age 4 - 11)
+3 x Round Trip Transportation (Per Person)
+
+Customer Name
+John Smith
+Customer Email
+john@example.com
+Customer Phone
++1234567890
+Price
+€ 150.00
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.booking_number == "GYGTESTADDON2"
+    assert booking.adt == 2
+    assert booking.chd == 1
+    assert booking.inf is None
+    assert booking.add_ons == "3 x Round Trip Transportation (Per Person)"
+
+
+def test_add_ons_explicit_label():
+    raw_email = """
+Booking confirmed
+Reference number
+GYGTESTEXPLICIT
+
+Date
+October 20, 2026, 7:00 PM
+
+Trip Name
+Cairo Dinner Cruise
+
+Option
+Buffet Dinner
+
+Number of participants
+2 x Adults (Age 12 - 99)
+
+Add-ons
+Private Hotel Transfer
+
+Customer Name
+Jane Doe
+Customer Email
+jane@example.com
+Customer Phone
++1234567890
+Price
+€ 120.00
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.booking_number == "GYGTESTEXPLICIT"
+    assert booking.adt == 2
+    assert booking.add_ons == "Private Hotel Transfer"
+
+
+

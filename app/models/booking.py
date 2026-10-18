@@ -14,6 +14,7 @@ class NormalizedBooking(BaseModel):
     date_trip: Optional[datetime] = None
     trip_name: Optional[str] = None
     option: Optional[str] = None
+    add_ons: Optional[str] = None
     customer_name: Optional[str] = None
     customer_email: Optional[str] = None
     customer_phone: Optional[str] = None
@@ -39,6 +40,7 @@ class AirtableBookingRecord(BaseModel):
     date_trip: Optional[str] = Field(None, alias="Date Trip")
     trip_name: Optional[str] = Field(None, alias="trip Name")
     option: Optional[str] = Field(None, alias="Option")
+    add_ons: Optional[str] = Field(None, alias="Add - Ons")
     customer_name: Optional[str] = Field(None, alias="Customer Name")
     customer_email: Optional[str] = Field(None, alias="Customer Email")
     customer_phone: Optional[str] = Field(None, alias="Customer Phone")
@@ -60,6 +62,7 @@ class AirtableBookingRecord(BaseModel):
         "agency",
         "trip_name",
         "option",
+        "add_ons",
         "hotel_name",
         "guide",
         mode="before"
