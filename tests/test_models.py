@@ -140,3 +140,37 @@ def test_airtable_booking_record_add_ons():
     rec4 = AirtableBookingRecord(**data_list)
     assert rec4.add_ons == "2 x Round Trip Transportation"
 
+
+def test_airtable_booking_record_participants_aliases():
+    record = AirtableBookingRecord(
+        booking_nr="GYG12345",
+        adt=2,
+        std=0,
+        chd=1,
+        inf=0,
+        youth=0
+    )
+    dumped = record.model_dump(by_alias=True, exclude_none=True)
+    assert dumped["ADT"] == 2
+    assert dumped["STD"] == 0
+    assert dumped["CHD"] == 1
+    assert dumped["Inf"] == 0
+    assert dumped["Youth"] == 0
+
+    # Test instantiation from Airtable dict with aliases
+    airtable_data = {
+        "Booking Nr.": "GYG12345",
+        "ADT": 2,
+        "STD": 0,
+        "CHD": 1,
+        "Inf": 0,
+        "Youth": 0
+    }
+    rec2 = AirtableBookingRecord(**airtable_data)
+    assert rec2.adt == 2
+    assert rec2.std == 0
+    assert rec2.chd == 1
+    assert rec2.inf == 0
+    assert rec2.youth == 0
+
+

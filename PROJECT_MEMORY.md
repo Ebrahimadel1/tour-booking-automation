@@ -94,6 +94,14 @@ Problem: GYG emails with add-ons under "Number of participants" (e.g. "2 x Round
 Root Cause: Parser was only extracting standard participant numbers (Adults, Children, Infants) from the participants section and ignoring extras/add-on lines, and neither NormalizedBooking nor AirtableBookingRecord had an add_ons field mapped to Airtable alias "Add - Ons".
 Fix: Added `add_ons` to `NormalizedBooking` and `AirtableBookingRecord` (alias="Add - Ons"), updated `GetYourGuideParser` to extract any non-participant line under `Number of participants` (as well as explicit "Add-ons" labels) without altering adult/child/infant parsing, and wired `add_ons` through `CreateLogic`, `ComparisonLogic`, and `GeminiService`.
 Regression Test: Added unit tests `test_participants_with_add_ons_round_trip`, `test_participants_with_child_and_add_ons`, `test_add_ons_explicit_label` in `tests/test_parser.py`, `test_airtable_booking_record_add_ons` in `tests/test_models.py`, and `test_create_and_update_with_add_ons` in `tests/test_logic.py`.
+Problem: Participant count fields without incoming values (# STD, # CHD, # Inf, # Youth) were being left blank in Airtable instead of 0.
+Root Cause: In `CreateLogic`, participant counts were mapped directly from `NormalizedBooking` which left omitted counts as `None`. Since repository serialization used `exclude_none=True`, these fields were omitted from the payload and Airtable left them blank. Additionally, `STD` (Student) and `Youth` participant fields were not mapped in `AirtableBookingRecord` or parsed.
+Fix: 
+1. Added `std` and `youth` fields to `NormalizedBooking` and `AirtableBookingRecord` with aliases `STD` and `Youth`.
+2. Updated `CreateLogic.execute` to default missing participant counts (`adt`, `std`, `chd`, `inf`, `youth`) to `0` instead of `None`.
+3. Extended `GetYourGuideParser` to extract `Student` / `Youth` categories from incoming emails.
+4. Added validation and comparison logic for `std` and `youth`.
+Regression Test: Added `test_create_participant_counts_default_to_zero` and `test_update_participant_counts_std_and_youth` in `tests/test_logic.py`, `test_airtable_booking_record_participants_aliases` in `tests/test_models.py`, and `test_participants_with_student_and_youth` in `tests/test_parser.py`.
 Status: RESOLVED
 ```
 
@@ -109,15 +117,15 @@ Status: RESOLVED
 
 ## Tests
 ```text
-Models tests (`test_models.py`)  → PASS (6 passed)
-Parser tests (`test_parser.py`)  → PASS (17 passed)
+Models tests (`test_models.py`)  → PASS (7 passed)
+Parser tests (`test_parser.py`)  → PASS (18 passed)
 Validator tests (`test_validators.py`) → PASS (22 passed)
-Logic tests (`test_logic.py`) → PASS (14 passed)
+Logic tests (`test_logic.py`) → PASS (16 passed)
 Airtable tests (`test_airtable.py`) → PASS (4 passed)
 Baserow tests (`test_baserow.py`) → PASS (10 passed)
 Gmail tests (`test_gmail.py`) → PASS (5 passed)
 Main Orchestrator tests (`test_main.py`) → PASS (12 passed)
-TOTAL: 90 tests passing.
+TOTAL: 94 tests passing.
 ```
 
 ## Deployment Status

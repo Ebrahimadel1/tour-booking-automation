@@ -221,4 +221,65 @@ def test_create_and_update_with_add_ons(repo):
     assert saved.add_ons == "2 x Private Airport Transfer"
 
 
+def test_create_participant_counts_default_to_zero(repo):
+    create_logic = CreateLogic(repo)
+    booking = create_sample_normalized()
+    # Explicitly set only ADT, leaving std, chd, inf, youth as None
+    booking.adt = 2
+    booking.std = None
+    booking.chd = None
+    booking.inf = None
+    booking.youth = None
+    
+    result = create_logic.execute(booking)
+    assert result == CreateResult.CREATED
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved is not None
+    assert saved.adt == 2
+    assert saved.std == 0
+    assert saved.chd == 0
+    assert saved.inf == 0
+    assert saved.youth == 0
+    
+    # Check the dumped model for Airtable format
+    dumped = saved.model_dump(by_alias=True, exclude_none=True)
+    assert dumped["ADT"] == 2
+    assert dumped["STD"] == 0
+    assert dumped["CHD"] == 0
+    assert dumped["Inf"] == 0
+    assert dumped["Youth"] == 0
+
+
+def test_update_participant_counts_std_and_youth(repo):
+    create_logic = CreateLogic(repo)
+    update_logic = UpdateLogic(repo)
+    
+    booking = create_sample_normalized()
+    booking.adt = 2
+    booking.std = None
+    booking.chd = None
+    booking.inf = None
+    booking.youth = None
+    create_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.std == 0
+    assert saved.youth == 0
+    
+    # Update with youth and student
+    booking.operation = OperationType.UPDATE
+    booking.std = 1
+    booking.youth = 2
+    assert update_logic.execute(booking)
+    
+    saved = repo.find_by_booking_number("GYG123")
+    assert saved.std == 1
+    assert saved.youth == 2
+    assert saved.adt == 2
+    assert saved.chd == 0
+    assert saved.inf == 0
+
+
+
 

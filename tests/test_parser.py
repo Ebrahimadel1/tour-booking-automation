@@ -307,4 +307,45 @@ Price
     assert booking.add_ons == "Private Hotel Transfer"
 
 
+def test_participants_with_student_and_youth():
+    raw_email = """
+Booking confirmed
+Reference number
+GYGTESTSTDYOUTH
+
+Date
+October 20, 2026, 7:00 PM
+
+Trip Name
+Cairo Dinner Cruise
+
+Option
+Buffet Dinner
+
+Number of participants
+2 x Adults
+1 x Student
+1 x Youth
+1 x Child
+1 x Infant
+
+Customer Name
+John Doe
+Customer Email
+john@example.com
+Customer Phone
++1234567890
+Price
+€ 250.00
+"""
+    booking = GetYourGuideParser.parse(raw_email)
+    assert booking.booking_number == "GYGTESTSTDYOUTH"
+    assert booking.adt == 2
+    assert booking.std == 1
+    assert booking.youth == 1
+    assert booking.chd == 1
+    assert booking.inf == 1
+
+
+
 

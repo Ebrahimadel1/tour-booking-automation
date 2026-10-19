@@ -235,21 +235,27 @@ class GetYourGuideParser:
         total_price, currency = parse_price(price_str) if price_str else (None, None)
         
         participants_str = get_val("Participants") or get_val("Number of participants")
-        adt, chd, inf = None, None, None
+        adt, std, chd, inf, youth = None, None, None, None, None
         add_ons = None
         if participants_str:
             participants_clean = participants_str.replace('*', '')
             adt_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Adult|Adults)', participants_clean, re.IGNORECASE)
+            std_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Student|Students)', participants_clean, re.IGNORECASE)
             chd_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Child|Children)', participants_clean, re.IGNORECASE)
             inf_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Infant|Infants)', participants_clean, re.IGNORECASE)
+            youth_match = re.search(r'(\d+)\s*(?:x\s*)?(?:Youth)', participants_clean, re.IGNORECASE)
             if adt_match:
                 adt = int(adt_match.group(1))
+            if std_match:
+                std = int(std_match.group(1))
             if chd_match:
                 chd = int(chd_match.group(1))
             if inf_match:
                 inf = int(inf_match.group(1))
+            if youth_match:
+                youth = int(youth_match.group(1))
             # Fallback for just a number e.g. "2"
-            if adt is None and chd is None and inf is None:
+            if adt is None and std is None and chd is None and inf is None and youth is None:
                 just_num = re.search(r'^(\d+)$', participants_clean.strip())
                 if just_num:
                     adt = int(just_num.group(1))
@@ -261,7 +267,7 @@ class GetYourGuideParser:
                 if not line:
                     continue
                 # Skip standard participant category lines
-                if re.search(r'(?:Adult|Adults|Child|Children|Infant|Infants|Youth)', line, re.IGNORECASE):
+                if re.search(r'(?:Adult|Adults|Child|Children|Infant|Infants|Youth|Student|Students)', line, re.IGNORECASE):
                     continue
                 if re.match(r'^\d+$', line):
                     continue
@@ -311,8 +317,10 @@ class GetYourGuideParser:
             total_price=total_price,
             currency=currency,
             adt=adt,
+            std=std,
             chd=chd,
             inf=inf,
+            youth=youth,
             hotel_name=hotel_name,
             google_maps=google_maps,
             country=customer_country,
