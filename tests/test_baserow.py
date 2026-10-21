@@ -210,3 +210,98 @@ def test_dual_repository_find_fallback(mocker):
 
     found = dual_repo.find_by_booking_number("GYG200")
     assert found == expected_record
+
+
+def test_baserow_create_converts_local_date_to_utc(mocker, baserow_repo):
+    mock_post = mocker.patch("requests.post")
+    mock_response = MagicMock()
+    mock_response.ok = True
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": 101}
+    mock_post.return_value = mock_response
+
+    # Cairo Summer (EEST, UTC+3)
+    record = AirtableBookingRecord(
+        agency="GetYourGuide",
+        booking_nr="GYGVN2Y6MBRN",
+        date_trip="2026-10-21T18:00:00"
+    )
+    success = baserow_repo.create(record)
+    assert success is True
+
+    posted_json = mock_post.call_args[1]["json"]
+    # 18:00 local Cairo time in October (EEST UTC+3) becomes 15:00 UTC
+    assert posted_json["Date Trip"] == "2026-10-21T15:00:00Z"
+
+
+def test_baserow_update_converts_local_date_to_utc_without_mutating_original(mocker, baserow_repo):
+    mock_get = mocker.patch("requests.get")
+    mock_get_response = MagicMock()
+    mock_get_response.ok = True
+    mock_get_response.json.return_value = {
+        "results": [{"id": 55, "Booking Nr.": "GYGVN2Y6MBRN"}]
+    }
+    mock_get.return_value = mock_get_response
+
+    mock_patch = mocker.patch("requests.patch")
+    mock_patch_response = MagicMock()
+    mock_patch_response.ok = True
+    mock_patch.return_value = mock_patch_response
+
+    original_changes = {
+        "Date Trip": "2026-10-21T18:00:00",
+        "Booking Status": "Active"
+    }
+    success = baserow_repo.update("GYGVN2Y6MBRN", original_changes)
+    assert success is True
+
+    patched_json = mock_patch.call_args[1]["json"]
+    # Verify sent payload was converted to UTC
+    assert patched_json["Date Trip"] == "2026-10-21T15:00:00Z"
+    # Verify original dictionary was NOT mutated (so Airtable is untouched)
+    assert original_changes["Date Trip"] == "2026-10-21T18:00:00"
+
+
+def test_baserow_find_converts_utc_to_local_time(mocker, baserow_repo):
+    mock_get = mocker.patch("requests.get")
+    mock_response = MagicMock()
+    mock_response.ok = True
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "count": 1,
+        "results": [
+            {
+                "id": 99,
+                "Agency": "GetYourGuide",
+                "Booking Nr.": "GYGVN2Y6MBRN",
+                "Date Trip": "2026-10-21T15:00:00Z"
+            }
+        ]
+    }
+    mock_get.return_value = mock_response
+
+    record = baserow_repo.find_by_booking_number("GYGVN2Y6MBRN")
+    assert record is not None
+    # 15:00 UTC converted back to Cairo local time (EEST UTC+3) is 18:00
+    assert record.date_trip == "2026-10-21T18:00:00"
+
+
+def test_baserow_winter_time_conversion(mocker, baserow_repo):
+    mock_post = mocker.patch("requests.post")
+    mock_response = MagicMock()
+    mock_response.ok = True
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": 102}
+    mock_post.return_value = mock_response
+
+    # Cairo Winter (EET, UTC+2 in January)
+    record = AirtableBookingRecord(
+        agency="GetYourGuide",
+        booking_nr="GYGWINTER",
+        date_trip="2026-01-15T18:00:00"
+    )
+    baserow_repo.create(record)
+    posted_json = mock_post.call_args[1]["json"]
+    # 18:00 local Cairo time in January (EET UTC+2) becomes 16:00 UTC
+    assert posted_json["Date Trip"] == "2026-01-15T16:00:00Z"
+
