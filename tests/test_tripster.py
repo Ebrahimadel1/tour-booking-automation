@@ -46,6 +46,7 @@ def test_parse_eml_files():
     assert b1.date_trip.hour == 20
     assert b1.date_trip.minute == 30
     assert b1.customer_name == "Vladimir"
+    assert b1.traveler_name == "Vladimir"
     assert b1.option == "Round-trip transfer: Sedan (1–3 persons)"
     assert b1.adt == 1
     assert b1.chd == 0
@@ -60,6 +61,7 @@ def test_parse_eml_files():
     b2 = by_nr.get("7406840")
     assert b2 is not None
     assert b2.customer_name == "Цветкова А."
+    assert b2.traveler_name == "Tsvetkova A."
     assert b2.option == "Excluding Transfer (Pickup & Drop-off)"
     assert b2.adt == 2
     assert b2.chd == 0
@@ -71,6 +73,7 @@ def test_parse_eml_files():
     b3 = by_nr.get("7409111")
     assert b3 is not None
     assert b3.customer_name == "Екатерина"
+    assert b3.traveler_name == "Ekaterina"
     assert b3.option == "Round-trip transfer: Minivan (4–8 persons)"
     assert b3.adt == 5
     assert b3.chd == 0
@@ -97,6 +100,7 @@ def test_tripster_children_and_adults_parsing():
     booking = TripsterParser.parse(sample_text)
     assert booking.booking_number == "7310502"
     assert booking.customer_name == "Светлана К."
+    assert booking.traveler_name == "Svetlana K."
     assert booking.option == "Excluding Transfer (Pickup & Drop-off)"
     assert booking.adt == 3
     assert booking.chd == 1
@@ -145,6 +149,7 @@ def test_tripster_create_logic_sets_zero_for_omitted_participants():
         date_trip=datetime(2026, 11, 8, 18, 0),
         trip_name="Cairo: Opal Nile Romantic Dinner Cruise & Live Entertainment",
         customer_name="Екатерина",
+        traveler_name="Ekaterina",
         option="1 · Трансфер в обе стороны: минивэн (4–8 чел.)",
         total_price_usd=240.0,
         collecting_usd=185.0,
@@ -160,6 +165,8 @@ def test_tripster_create_logic_sets_zero_for_omitted_participants():
     saved_record: AirtableBookingRecord = mock_repo.create.call_args[0][0]
     assert saved_record.agency == "Tripster"
     assert saved_record.booking_nr == "7409111"
+    assert saved_record.customer_name == "Екатерина"
+    assert saved_record.traveler_name == "Ekaterina"
     assert saved_record.booking_status == "PENDING"
     assert saved_record.total_price_eur is None
     assert saved_record.total_price_usd == 240.0

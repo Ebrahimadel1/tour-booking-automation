@@ -19,6 +19,7 @@ class CreateLogic:
             option=booking.option,
             add_ons=booking.add_ons,
             customer_name=booking.customer_name,
+            traveler_name=booking.traveler_name,
             customer_email=booking.customer_email,
             customer_phone=booking.customer_phone,
             country_from_phone=booking.country,

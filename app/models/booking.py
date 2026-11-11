@@ -32,6 +32,7 @@ class NormalizedBooking(BaseModel):
     total_price_usd: Optional[float] = None
     collecting_usd: Optional[float] = None
     booking_status: Optional[str] = None
+    traveler_name: Optional[str] = None
 
 class AirtableBookingRecord(BaseModel):
     """
@@ -47,6 +48,7 @@ class AirtableBookingRecord(BaseModel):
     option: Optional[str] = Field(None, alias="Option")
     add_ons: Optional[str] = Field(None, alias="Add - Ons")
     customer_name: Optional[str] = Field(None, alias="Customer Name")
+    traveler_name: Optional[str] = Field(None, alias="Traveler name")
     customer_email: Optional[str] = Field(None, alias="Customer Email")
     customer_phone: Optional[str] = Field(None, alias="Customer Phone")
     country_from_phone: Optional[str] = Field(None, alias="Country from Phone")
