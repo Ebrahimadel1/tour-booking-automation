@@ -6,6 +6,7 @@ from typing import Optional, List
 from app.gmail.reader import GmailReader
 from app.gmail.messages import GmailMessage
 from app.parsers.getyourguide import GetYourGuideParser
+from app.parsers.tripster import TripsterParser
 from app.validators.booking import BookingValidator
 from app.models.operations import OperationType
 from app.repositories.booking_repository import BookingRepository
@@ -63,6 +64,10 @@ class Orchestrator:
                 if "booking" in subject_lower or "canceled" in subject_lower or "detail change" in subject_lower or "messaged you" in subject_lower:
                     is_booking = True
                     provider = "GetYourGuide"
+            elif "tripster" in sender_lower or "трипстер" in sender_lower or "tripster" in subject_lower or "трипстер" in subject_lower or any("tripster" in l.lower() for l in msg.labels):
+                if "новый заказ" in subject_lower or "заказ" in subject_lower or "booking" in subject_lower or "отмен" in subject_lower:
+                    is_booking = True
+                    provider = "Tripster"
             
             if not is_booking:
                 logger.info(f"Message {msg.message_id} is NOT a booking. Marking as ignored and skipping.")
@@ -75,6 +80,8 @@ class Orchestrator:
             try:
                 if provider == "GetYourGuide":
                     booking = GetYourGuideParser.parse(msg.plain_text)
+                elif provider == "Tripster":
+                    booking = TripsterParser.parse(msg.plain_text, html_content=msg.html)
                 else:
                     raise ValueError(f"No parser for provider: {provider}")
                     

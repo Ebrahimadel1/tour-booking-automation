@@ -29,6 +29,9 @@ class NormalizedBooking(BaseModel):
     hotel_name: Optional[str] = None
     google_maps: Optional[str] = None
     country: Optional[str] = None
+    total_price_usd: Optional[float] = None
+    collecting_usd: Optional[float] = None
+    booking_status: Optional[str] = None
 
 class AirtableBookingRecord(BaseModel):
     """
@@ -50,6 +53,8 @@ class AirtableBookingRecord(BaseModel):
     customer_country: Optional[str] = Field(None, alias="Customer Country")
     guide: Optional[str] = Field(None, alias="Guide")
     total_price_eur: Optional[float] = Field(None, alias="Total price EUR")
+    total_price_usd: Optional[float] = Field(None, alias="Total price USD")
+    collecting_usd: Optional[float] = Field(None, alias="Collecting USD")
     adt: Optional[int] = Field(None, alias="ADT")
     std: Optional[int] = Field(None, alias="STD")
     chd: Optional[int] = Field(None, alias="CHD")

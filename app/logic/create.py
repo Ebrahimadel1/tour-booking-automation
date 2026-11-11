@@ -24,7 +24,9 @@ class CreateLogic:
             country_from_phone=booking.country,
             customer_country=booking.country,
             guide=booking.guide,
-            total_price_eur=booking.total_price,
+            total_price_eur=booking.total_price if booking.currency == "EUR" or (booking.currency is None and booking.provider != "Tripster") else None,
+            total_price_usd=booking.total_price_usd,
+            collecting_usd=booking.collecting_usd,
             adt=booking.adt if booking.adt is not None else 0,
             std=booking.std if booking.std is not None else 0,
             chd=booking.chd if booking.chd is not None else 0,
@@ -32,7 +34,7 @@ class CreateLogic:
             youth=booking.youth if booking.youth is not None else 0,
             hotel_name=booking.hotel_name,
             google_maps=booking.google_maps,
-            booking_status="Active"
+            booking_status=booking.booking_status or "Active"
         )
         success = self.repo.create(record)
         return CreateResult.CREATED if success else CreateResult.FAILED

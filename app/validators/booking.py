@@ -49,6 +49,8 @@ class BookingValidator:
 
     @staticmethod
     def _validate_create(booking: NormalizedBooking, result: ValidationResult):
+        is_tripster = (booking.provider or "").lower() == "tripster"
+
         if booking.date_trip is None:
             result.add_error("date_trip: required field is missing for CREATE")
             
@@ -58,20 +60,30 @@ class BookingValidator:
         if not is_not_empty_string(booking.customer_name):
             result.add_error("customer_name: required field is missing for CREATE")
             
-        if not is_valid_email(booking.customer_email):
-            result.add_error("customer_email: invalid email format")
-            
-        if not is_not_empty_string(booking.customer_phone):
-            result.add_error("customer_phone: required field is missing for CREATE")
+        if not is_tripster:
+            if not is_valid_email(booking.customer_email):
+                result.add_error("customer_email: invalid email format")
+                
+            if not is_not_empty_string(booking.customer_phone):
+                result.add_error("customer_phone: required field is missing for CREATE")
+        else:
+            if booking.customer_email and not is_valid_email(booking.customer_email):
+                result.add_error("customer_email: invalid email format")
             
         if not is_not_empty_string(booking.guide):
             result.add_warning("guide: missing optional field")
             
-        if not is_valid_price(booking.total_price):
-            result.add_error("total_price: missing or negative")
-            
-        if booking.total_price is not None and not is_not_empty_string(booking.currency):
-            result.add_error("currency: missing while price is provided")
+        if is_tripster:
+            if not is_valid_price(booking.total_price_usd):
+                result.add_error("total_price_usd: missing or negative")
+            if not is_valid_price(booking.collecting_usd):
+                result.add_error("collecting_usd: missing or negative")
+        else:
+            if not is_valid_price(booking.total_price):
+                result.add_error("total_price: missing or negative")
+                
+            if booking.total_price is not None and not is_not_empty_string(booking.currency):
+                result.add_error("currency: missing while price is provided")
             
         if not is_valid_participant_count(booking.adt):
             result.add_error("adt: cannot be negative")
